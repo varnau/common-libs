@@ -469,31 +469,39 @@ int graph_add_edge_iw(int src, int dst, void* edge_data, char edge_type, float w
 
 edge_t* graph_get_edge_s(char* src, char* dst, char edge_type, graph_t* graph_p)
 {
-	int s = graph_find_vertex(src,graph_p);
-	int d = graph_find_vertex(dst,graph_p);
-	if(s >= 0 && d >= 0)	//opt
-		return graph_get_edge_i(s,d,edge_type, graph_p);
-	else
+	vertex_t* v_src = graph_get_vertex_s (src, graph_p);
+	vertex_t* v_dst = graph_get_vertex_s (dst, graph_p);
+	if (v_src == NULL || v_dst == NULL)
 		return NULL;
+	else
+		return graph_get_edge_v (v_src, v_dst, edge_type, graph_p);
 }
-
 
 edge_t* graph_get_edge_i(int src, int dst, char edge_type, graph_t* graph_p)
 {
+	vertex_t* v_src = graph_get_vertex_i (src, graph_p);
+	vertex_t* v_dst = graph_get_vertex_i (dst, graph_p);
+	if (v_src == NULL || v_dst == NULL)
+		return NULL;
+	else
+		return graph_get_edge_v (v_src, v_dst, edge_type, graph_p);
+}
+
+edge_t* graph_get_edge_v(vertex_t* v_src, vertex_t* v_dst, char edge_type, graph_t* graph_p)
+{
 	linked_list_iterator_t *iter;
 	
-	if(graph_exists_vertex_i(src, graph_p) < 0 || graph_exists_vertex_i(dst, graph_p) < 0 )
+	if (v_src == NULL || v_dst == NULL)
 		return NULL;
 	
-	vertex_t *v = graph_get_vertex_i(src,graph_p);
 	edge_t *e;
 	if(edge_type == GRAPH_DIRECTED)
 	{
-		iter = linked_list_iterator_new(v->dst);
+		iter = linked_list_iterator_new(v_src->dst);
 		e = (edge_t*)linked_list_iterator_curr(iter);
 		while(e != NULL)
 		{
-			if(e->dst_id == dst)
+			if(e->dst_id == v_dst->id)
 			{
 				linked_list_iterator_free(iter);
 				return e;
@@ -505,12 +513,12 @@ edge_t* graph_get_edge_i(int src, int dst, char edge_type, graph_t* graph_p)
 	else if(edge_type == GRAPH_NON_DIRECTED){
 		int nd_dst;
 		
-		iter = linked_list_iterator_new(v->nd);
+		iter = linked_list_iterator_new(v_src->nd);
 		e = (edge_t*)linked_list_iterator_curr(iter);
 		while(e != NULL)
 		{
-			nd_dst = (e->src_id==src)? e->dst_id: e->src_id;
-			if(nd_dst == dst)
+			nd_dst = (e->src_id==v_src->id)? e->dst_id: e->src_id;
+			if(nd_dst == v_dst->id)
 			{
 				linked_list_iterator_free(iter);
 				return e;
@@ -750,3 +758,90 @@ int graph_get_size (graph_t* graph_p)
 {
 	return graph_p->num_edges;
 }
+
+/**
+ * Profiling
+ */
+
+int graph_grade_s(char* vertex_name, int edge_type, graph_t* graph_p)
+{
+	return linked_list_size (graph_get_neighborhood_s (vertex_name, edge_type, 1, graph_p));
+}
+
+int graph_grade_i(int vertex_id, int edge_type, graph_t* graph_p)
+{
+	return linked_list_size (graph_get_neighborhood_i (vertex_id, edge_type, 1, graph_p));
+}
+
+int graph_grade_v(vertex_t * v, int edge_type, graph_t* graph_p)
+{
+	return linked_list_size (graph_get_neighborhood_v (v, edge_type, 1, graph_p));
+}
+
+/**
+ * Computes the cluster coefficient of a vertex.
+ * This value is the connectivity among its neighbors divided by the 
+ * maximum possible connectivity among its neighbors
+ */
+float graph_vertex_clustering_coefficient_s (char* vertex_name, int edge_type, graph_t* graph_p)
+{
+	return graph_vertex_clustering_coefficient_v (graph_get_vertex_s (vertex_name, graph_p), edge_type, graph_p);
+}
+
+float graph_vertex_clustering_coefficient_i (int vertex_id, int edge_type, graph_t* graph_p)
+{
+	return graph_vertex_clustering_coefficient_v (graph_get_vertex_i (vertex_id, graph_p), edge_type, graph_p);
+}
+
+float graph_vertex_clustering_coefficient_v (vertex_t* v, int edge_type, graph_t* graph_p)
+{
+	if (v == NULL)
+		return 0;
+	
+	linked_list_t * l = graph_neighborhood_v (v, edge_type, 1, graph_p);
+	int num_adjacent = linked_list_size (l);
+	int max_edges = (num_adjacent * (num_adjacent-1)/* / 2*/);
+	int curr_edges = 0;
+	linked_list_iterator_t* iter1 = linked_list_iterator_new (l);
+	linked_list_iterator_t* iter2 = linked_list_iterator_new (l);
+	vertex_t* v_neighbor1 = (vertex_t*)linked_list_iterator_curr(iter1);
+	vertex_t* v_neighbor2 = (vertex_t*)linked_list_iterator_curr(iter2);
+	
+	while(v_neighbor1 != NULL)
+	{
+		while (v_neighbor2 != NULL)
+		{
+			if (graph_get_edge_v (v_neighbor1, v_neighbor2, edge_type, graph_p) != NULL)
+				curr_edges++;
+		
+			v_neighbor2 = (vertex_t*) linked_list_iterator_next (iter2);
+		}
+
+		v_neighbor1 = (vertex_t*) linked_list_iterator_next (iter1);
+		v_neighbor2 = (vertex_t*) linked_list_iterator_first (l);
+	}
+	linked_list_iterator_free(iter1);
+	linked_list_iterator_free(iter2);
+	linked_list_free (l, NULL);
+	return (curr_edges/max_edges);
+}
+
+/**
+ * Computes the average clustering coefficient of the graph.
+ * This value is the summation of the clustering coefficient of all vertices
+ * divided by the quantity of vertices.
+ */
+float graph_clustering_coefficient (int edge_type, graph_t* graph_p)
+{
+	float cc = 0;
+	int num_adjacent, i;
+
+	for (i = 0; i < graph_p->num_vertices; i++)
+		cc += graph_vertex_clustering_coefficient_i(i, edge_type, graph_p);
+	
+	cc /= graph_p->num_vertices;
+
+	return cc;
+}
+
+

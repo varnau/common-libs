@@ -11,6 +11,30 @@ Suite *create_test_suite(void);
 //     Checked fixtures    *
 //**************************
 
+void create_graph()
+{
+	g = graph_new(GRAPH_MIXED_DIRECTED | GRAPH_CYCLIC, 20, COLLECTION_MODE_ASYNCHRONIZED);
+
+	graph_add_vertex("A", NULL, g);
+	graph_add_vertex("B", NULL, g);
+	graph_add_vertex("C", NULL, g);
+	graph_add_vertex("D", NULL, g);
+	graph_add_vertex("E", NULL, g);
+
+	
+	graph_add_edge_sw("A", "B", NULL, GRAPH_DIRECTED, 1, g);
+	graph_add_edge_sw("A", "C", NULL, GRAPH_DIRECTED, 1, g);
+	graph_add_edge_sw("A", "C", NULL, GRAPH_NON_DIRECTED, 1, g);
+	graph_add_edge_sw("C", "D", NULL, GRAPH_NON_DIRECTED, 1, g);
+	graph_add_edge_sw("D", "B", NULL, GRAPH_DIRECTED, 1, g);
+	graph_add_edge_sw("C", "B", NULL, GRAPH_DIRECTED, 1, g);
+}
+
+void free_graph()
+{
+	graph_free(NULL, NULL, g);
+}
+
 
 START_TEST(test_empty_graph) {
 	
@@ -70,10 +94,24 @@ START_TEST(test_small_graph) {
 END_TEST
 
 
+START_TEST(test_cc_grade)
+{
+	int ret;
+	float cc;
+	ret = graph_grade_s("A", GRAPH_EDGE_ALL, g);
+	fail_if(ret != 3, "grade(A): should be 3, but ret=%d", ret);
+	cc = graph_vertex_clustering_coefficient_s ("A", GRAPH_EDGE_OUT, graph_p);
+	fail_if(cc != 0.5, "clustering_coefficient(A): should be 0.5, but cc=%f", cc);
+}
+END_TEST
+
+
+
 START_TEST(test_big_graph) {
 	
 }
 END_TEST
+
 
 
 /* ******************************
@@ -99,14 +137,15 @@ Suite *create_test_suite(void) {
     tcase_add_test(tc_create_free, test_big_graph);
     //tcase_add_test(tc_create_free, test_create_free);
     
-    //TCase *tc_iterators = tcase_create("Iterators");
-    //tcase_add_checked_fixture(tc_iterators, create_graph, free_graph);
+    TCase *tc_profiling = tcase_create("Profiling");
+	tcase_add_test(tc_profiling, test_cc_grade);
+    tcase_add_checked_fixture(tc_profiling, create_graph, free_graph);
     //tcase_add_test(tc_iterators, test_iterators);
     
     // Add test cases to a test suite
     Suite *fs = suite_create("Graph");
     suite_add_tcase(fs, tc_create_free);
-    //suite_add_tcase(fs, tc_iterators);
+    suite_add_tcase(fs, tc_profiling);
     
     return fs;
 }

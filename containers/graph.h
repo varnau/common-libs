@@ -148,6 +148,7 @@ int graph_remove_edge_e(edge_t *edge_p, char edge_type, void (*edge_data_callbac
 
 edge_t* graph_get_edge_s(char* src, char* dst, char edge_type, graph_t*);
 edge_t* graph_get_edge_i(int src, int dst, char edge_type, graph_t*);
+edge_t* graph_get_edge_v(vertex_t* v_src, vertex_t* v_dst, char edge_type, graph_t*);
 
 /**
  * Path Functions
@@ -162,4 +163,14 @@ int graph_print_dot(char* file_name, graph_t*);
 int graph_get_order (graph_t*);	// vertex number
 int graph_get_size (graph_t*);	// edge number
 
+/**
+ * Profiling
+ */
+int graph_grade_s(char* vertex_name, int edge_type, graph_t*);
+int graph_grade_i(int vertex_id, int edge_type, graph_t*);
+int graph_grade_v(vertex_t* v, int edge_type, graph_t*);
+float graph_vertex_clustering_coefficient_s(char* vertex_name, int edge_type, graph_t*);
+float graph_vertex_clustering_coefficient_i(int vertex_id, int edge_type, graph_t*);
+float graph_vertex_clustering_coefficient_v(vertex_t* v, int edge_type, graph_t*);
+float graph_clustering_coefficient(int edge_type, graph_t*);
 #endif //_GRAPH_H_
