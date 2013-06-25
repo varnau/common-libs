@@ -183,7 +183,7 @@ int graph_exists_vertex_s(char* name, graph_t* graph_p)
 
 int graph_exists_vertex_i(int id, graph_t* graph_p)
 {
-	if( (id < graph_p->num_vertices || id >= 0 ) && graph_get_vertex_i(id, graph_p) != NULL)
+	if( graph_get_vertex_i(id, graph_p) != NULL)
 		return 0;
 	else
 		return -1;
@@ -250,6 +250,123 @@ int graph_reachable_vertex(int src, int dst, graph_t* graph_p){
 }
 
 
+
+linked_list_t* graph_get_neighborhood_v(vertex_t* vertex_p, int edge_type, int k, graph_t* graph_p)
+{
+	if(vertex_p == NULL)
+		return NULL;
+	
+	linked_list_t *queue = linked_list_new(COLLECTION_MODE_ASYNCHRONIZED); 
+	if(k <= 0){
+		linked_list_insert_last(vertex_p, queue);
+		return queue;
+	}
+	
+	khash_t(ii) *visited = kh_init(ii);
+	
+	linked_list_iterator_t *iter = linked_list_iterator_new(queue);
+	linked_list_iterator_t *iter_edge = linked_list_iterator_new(queue);
+	vertex_t *v = vertex_p;
+	edge_t *e;
+	
+	int in = edge_type & GRAPH_EDGE_IN;
+	int out = edge_type & GRAPH_EDGE_OUT;
+	int dst, ret;
+	
+	//Insert a NULL to indicate the distance from the origin was increased.
+	//You can know the distance to the origin counting the NULLs 
+	//(in fact, you can't, because those NULL are deleted)
+	linked_list_insert_last(v, queue);
+	linked_list_insert_last(NULL, queue);
+	linked_list_iterator_first(iter);
+	
+	kh_put(ii,visited,v->id,&ret);
+	//printf("k = %d\n",k);
+	while(1)
+	{
+		//printf("\n\n");
+		if(v == NULL){
+			k--;
+			//printf("k = %d\n",k);
+			linked_list_iterator_remove(iter);
+			if(linked_list_iterator_curr(iter) == NULL)	//If it was the last NULL, break;
+				break;
+		
+			if(k <= 0)
+				break;
+			else
+			{
+				linked_list_insert_last(NULL, queue);
+				v = (vertex_t*)linked_list_iterator_curr(iter);
+				continue;
+			}
+		}
+		
+		//printf("--VERTEX-- %d\n", v->id);
+		if(in)
+		{
+			linked_list_iterator_init(v->src, iter_edge);
+			e = linked_list_iterator_curr(iter_edge);
+			while(e != NULL)
+			{
+				kh_put(ii,visited,e->src_id,&ret);
+				if(ret != 0)
+					linked_list_insert_last( array_list_get(e->src_id, graph_p->vertices), queue); 	//inserts in the queue
+
+				e= (edge_t*)linked_list_iterator_next(iter_edge);
+			}
+		}
+		if(out)
+		{
+			linked_list_iterator_init(v->dst, iter_edge);
+			e = linked_list_iterator_curr(iter_edge);
+			while(e != NULL)
+			{
+				kh_put(ii,visited,e->dst_id,&ret);
+				if(ret != 0)
+					linked_list_insert_last( array_list_get(e->dst_id, graph_p->vertices), queue); 	//inserts in the queue
+				
+				e= (edge_t*)linked_list_iterator_next(iter_edge);
+			}
+		}
+		if(in || out){
+			linked_list_iterator_init(v->nd, iter_edge);
+			e = linked_list_iterator_curr(iter_edge);
+			while(e != NULL)
+			{
+				dst = (e->dst_id!=v->id)? e->dst_id: e->src_id;
+				
+				kh_put(ii,visited,dst,&ret);
+				if(ret != 0){
+					linked_list_insert_last( array_list_get(dst, graph_p->vertices), queue); 	//inserts in the queue
+				}
+				//printf("Inserted %d, ret=%d\n", dst, ret);
+
+				e= (edge_t*)linked_list_iterator_next(iter_edge);
+			}
+		}
+		
+		v = (vertex_t*)linked_list_iterator_next(iter);
+	}
+	
+	linked_list_iterator_free(iter);
+	kh_destroy(ii,visited);
+	
+	return queue;
+}
+linked_list_t* graph_get_neighborhood_s(char* name, int edge_type, int k_jumps, graph_t* graph_p)
+{
+	graph_get_neighborhood_v(graph_get_vertex_s(name, graph_p), edge_type, k_jumps, graph_p);
+}
+linked_list_t* graph_get_neighborhood_i(int vertex_id, int edge_type, int k_jumps, graph_t* graph_p)
+{
+	graph_get_neighborhood_v(graph_get_vertex_i(vertex_id, graph_p), edge_type, k_jumps, graph_p);
+}
+
+linked_list_t* graph_get_adjacents_v(vertex_t* vertex_p, graph_t* graph_p);
+linked_list_t* graph_get_adjacents_s(char* name, graph_t* graph_p);
+linked_list_t* graph_get_adjacents_i(int id, graph_t* graph_p);
+
 /*!
  * @abstract
  * 
@@ -265,6 +382,18 @@ int graph_add_vertex(char* name, void* vertex_data, graph_t* graph_p){
 	if (name==NULL)
 		return -3;
 	
+	int length = strnlen(name,GRAPH_MAX_NAME_LENGTH)+1;
+	char* n = (char*)malloc(length);
+	strncpy(n, name, length);
+	
+	int ret;
+	khiter_t k = kh_put(gr, graph_p->dict, n, &ret);
+	if (!ret){
+		//kh_del(gr, graph_p->dict, k);
+		free(n);
+		return -2;
+	}
+	
 	if (linked_list_size(graph_p->removed_vertices))
 	{
 		v = linked_list_get_first(graph_p->removed_vertices);
@@ -275,6 +404,7 @@ int graph_add_vertex(char* name, void* vertex_data, graph_t* graph_p){
 		v = (vertex_t*)malloc(sizeof(vertex_t));
 		if(array_list_insert(v, graph_p->vertices) == 0){
 			free(v);
+			free(n);
 			return -1;
 		}
 		
@@ -284,13 +414,7 @@ int graph_add_vertex(char* name, void* vertex_data, graph_t* graph_p){
 	//int id = graph_find_vertex(name, g); // Even if it already exists, it has to create a new one
 	
 	 
-	int ret;
-	khiter_t k = kh_put(gr, graph_p->dict, name, &ret);
-	if (!ret){
-		free(v);
-		kh_del(gr, graph_p->dict, k);
-		return -2;
-	}
+
 	//Created && appended OK
 
 	
@@ -300,9 +424,7 @@ int graph_add_vertex(char* name, void* vertex_data, graph_t* graph_p){
 	v->dst = linked_list_new(graph_p->sync_mode);
 	v->nd = linked_list_new(graph_p->sync_mode);
 	
-	int length = strnlen(name,GRAPH_MAX_NAME_LENGTH)+1;
-	v->name = (char*)malloc(length);
-	strncpy(v->name, name, length);
+	v->name = n;
 	
 	kh_value(graph_p->dict,k) = v->id;
 	
@@ -626,7 +748,7 @@ int graph_remove_edge_e(edge_t *edge_p, char edge_type, void (*edge_data_callbac
  * Others
  */
 
-int graph_print(graph_t* graph_p)
+void graph_print(graph_t* graph_p)
 {
 	int i;
 	vertex_t *v;
@@ -683,7 +805,7 @@ int graph_print(graph_t* graph_p)
 
 
 
-int graph_print_dot(char* file_name, graph_t* graph_p)
+void __graph_print_dot(char* file_name, int print_weight, graph_t* graph_p)
 {
 	FILE *f;
 	int i;
@@ -708,16 +830,22 @@ int graph_print_dot(char* file_name, graph_t* graph_p)
 			continue;
 		
 		if(!linked_list_size(v->src) && !linked_list_size(v->dst) && !linked_list_size(v->nd))
-			fprintf(f,"\t%s;\n", v->name);
+			fprintf(f,"\t\"%s\";\n", v->name);
 		
 		iter = linked_list_iterator_init(v->dst, iter);
 		e = (edge_t*) linked_list_iterator_curr(iter);
 		while (e != NULL)
 		{
-			fprintf(f,"\t%s -> %s [label=\"%.2f\"];\n"
-					, (graph_get_vertex_i(e->src_id, graph_p))->name
-					, (graph_get_vertex_i(e->dst_id, graph_p))->name
-					, e->weight);
+			if(print_weight)
+				fprintf(f,"\t\"%s\" -> \"%s\" [label=\"%.2f\"];\n"
+						, (graph_get_vertex_i(e->src_id, graph_p))->name
+						, (graph_get_vertex_i(e->dst_id, graph_p))->name
+						, e->weight);
+			else
+				fprintf(f,"\t\"%s\" -> \"%s\" ;\n"
+						, (graph_get_vertex_i(e->src_id, graph_p))->name
+						, (graph_get_vertex_i(e->dst_id, graph_p))->name);
+						
 			e = (edge_t*)linked_list_iterator_next(iter);
 		}
 		
@@ -727,10 +855,15 @@ int graph_print_dot(char* file_name, graph_t* graph_p)
 		{
 			if( e->src_id == v->id)
 			{
-				fprintf(f,"\t%s -> %s [dir=none,label=\"%.2f\"];\n"
-					, (graph_get_vertex_i(e->src_id, graph_p))->name
-					, (graph_get_vertex_i(e->dst_id, graph_p))->name
-					, e->weight);
+				if(print_weight)
+					fprintf(f,"\t\"%s\" -> \"%s\" [dir=none,label=\"%.2f\"];\n"
+						, (graph_get_vertex_i(e->src_id, graph_p))->name
+						, (graph_get_vertex_i(e->dst_id, graph_p))->name
+						, e->weight);
+				else
+					fprintf(f,"\t\"%s\" -> \"%s\" [dir=none];\n"
+						, (graph_get_vertex_i(e->src_id, graph_p))->name
+						, (graph_get_vertex_i(e->dst_id, graph_p))->name);
 			}
 			e = (edge_t*)linked_list_iterator_next(iter);
 		}
@@ -741,6 +874,16 @@ int graph_print_dot(char* file_name, graph_t* graph_p)
 	if(graph_p->num_vertices)
 		linked_list_iterator_free(iter);
 }
+void graph_print_dot(char* file_name, graph_t* graph_p)
+{
+	__graph_print_dot(file_name, 0, graph_p);
+}
+
+void graph_print_dot_w(char* file_name, graph_t* graph_p)
+{
+	__graph_print_dot(file_name, 1, graph_p);
+}
+
 
 int graph_get_order (graph_t* graph_p)
 {

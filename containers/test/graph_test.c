@@ -75,6 +75,52 @@ START_TEST(test_big_graph) {
 }
 END_TEST
 
+#define ged(s,d) graph_add_edge_i(s,d,NULL,GRAPH_DIRECTED,g)
+#define ge(s,d) graph_add_edge_i(s,d,NULL,GRAPH_NON_DIRECTED,g)
+
+void print_v(void* vv)
+{
+	vertex_t *v = (vertex_t*)vv;
+	if(vv != NULL)
+//		printf("%p(%s,%d), ",v,v->name, v->id);
+		printf("%d, ",v->id);
+	else
+		printf("NULL, ");
+}
+
+START_TEST(test_neighbor_k_level) {
+	g = graph_new(GRAPH_MIXED_DIRECTED | GRAPH_CYCLIC |GRAPH_STRICT, 300, COLLECTION_MODE_ASYNCHRONIZED);
+	char name[255];
+	
+	const int num_vertices = 8;
+	
+	int i;
+
+	for(i = 0; i < num_vertices; i++)
+	{
+		sprintf(name, "%d",i);
+		graph_add_vertex(name,NULL, g);
+		//printf("Added %s as %d\n",name, graph_add_vertex(name,NULL, g)); 
+	}
+	
+	ge(0,1);
+	ge(0,2);
+	ge(1,3);
+	ge(2,3);
+	ge(1,5);
+	ge(5,6);
+	ge(5,7);
+	ge(7,4);
+	
+	linked_list_t *l = graph_get_neighborhood_i(0,GRAPH_EDGE_ALL, 3, g);
+	linked_list_print(l, print_v);
+
+	graph_print_dot("graph_nh.gv",g);
+	graph_free(NULL, NULL, g);
+	
+
+}
+END_TEST
 
 /* ******************************
  *      Main entry point        *
@@ -97,6 +143,7 @@ Suite *create_test_suite(void) {
     tcase_add_test(tc_create_free, test_empty_graph);
     tcase_add_test(tc_create_free, test_small_graph);
     tcase_add_test(tc_create_free, test_big_graph);
+    tcase_add_test(tc_create_free, test_neighbor_k_level);
     //tcase_add_test(tc_create_free, test_create_free);
     
     //TCase *tc_iterators = tcase_create("Iterators");

@@ -37,6 +37,7 @@
 #include "khash.h"
 
 KHASH_MAP_INIT_STR(gr,int)
+KHASH_MAP_INIT_INT(ii,int)
 
 
 typedef struct edge {
@@ -77,7 +78,13 @@ typedef struct graph {
 } graph_t;
 
 
+///Neigborhood edges direction
+#define GRAPH_EDGE_IN	1
+#define GRAPH_EDGE_OUT	2
+#define GRAPH_EDGE_ALL	3
 
+
+///Generation Graph type mask
 #define GRAPH_NON_DIRECTED			0b00000001
 #define GRAPH_DIRECTED				0b00000010
 #define GRAPH_MIXED_DIRECTED		0b00000011
@@ -118,6 +125,17 @@ vertex_t* graph_get_vertex_i(int vertex_id, graph_t * graph_p);
 
 void* graph_get_vertex_data_s(char* name, graph_t*);
 void* graph_get_vertex_data_i(int id, graph_t*);
+
+
+
+linked_list_t* graph_get_neighborhood_v(vertex_t* vertex_p, int edge_type, int k_jumps, graph_t*);
+linked_list_t* graph_get_neighborhood_s(char* name, int edge_type, int k_jumps, graph_t*);
+linked_list_t* graph_get_neighborhood_i(int vertex_id, int edge_type, int k_jumps, graph_t*);
+
+linked_list_t* graph_get_adjacents_v(vertex_t* vertex_p, graph_t*);
+linked_list_t* graph_get_adjacents_s(char* name, graph_t*);
+linked_list_t* graph_get_adjacents_i(int id, graph_t*);
+
 /*
 linked_list_t* graph_vertex_neighborhood_s(char* name, graph_t*);
 linked_list_t* graph_vertex_neighborhood_i(int id, graph_t*);
@@ -128,6 +146,15 @@ linked_list_t* graph_vertex_neighborhood_out_i(int id, graph_t*);
 linked_list_t* graph_vertex_neighborhood_in_s(char* name, graph_t*);
 linked_list_t* graph_vertex_neighborhood_in_i(int id, graph_t*);
 //adjacent
+
+linked_list_t* graph_vertex_adjacents_s(char* name, graph_t*);
+linked_list_t* graph_vertex_adjacents_i(int id, graph_t*);
+
+linked_list_t* graph_vertex_adjacents_out_s(char* name, graph_t*);
+linked_list_t* graph_vertex_adjacents_out_i(int id, graph_t*);
+
+linked_list_t* graph_vertex_adjacents_in_s(char* name, graph_t*);
+linked_list_t* graph_vertex_adjacents_in_i(int id, graph_t*);
 */
 
 int graph_remove_vertex_s(char* vertex_name, void (*vertex_data_callback) (void* vertex_data),void (*edge_data_callback) (void* edge_data), graph_t*);
@@ -157,8 +184,9 @@ edge_t* graph_get_edge_i(int src, int dst, char edge_type, graph_t*);
 /**
  * Others
  */
-int graph_print(graph_t*);	
-int graph_print_dot(char* file_name, graph_t*);
+void graph_print(graph_t*);	
+void graph_print_dot(char* file_name, graph_t*);
+void graph_print_dot_w(char* file_name, graph_t*);
 int graph_get_order (graph_t*);	// vertex number
 int graph_get_size (graph_t*);	// edge number
 
