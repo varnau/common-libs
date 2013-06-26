@@ -363,9 +363,18 @@ linked_list_t* graph_get_neighborhood_i(int vertex_id, int edge_type, int k_jump
 	return graph_get_neighborhood_v(graph_get_vertex_i(vertex_id, graph_p), edge_type, k_jumps, graph_p);
 }
 
-linked_list_t* graph_get_adjacents_v(vertex_t* vertex_p, graph_t* graph_p);
-linked_list_t* graph_get_adjacents_s(char* name, graph_t* graph_p);
-linked_list_t* graph_get_adjacents_i(int id, graph_t* graph_p);
+linked_list_t* graph_get_adjacents_v(vertex_t* vertex_p, graph_t* graph_p)
+{
+	return graph_get_neighborhood_v(vertex_p, GRAPH_EDGE_OUT, 1, graph_p);
+}
+linked_list_t* graph_get_adjacents_s(char* name, graph_t* graph_p)
+{
+	return graph_get_neighborhood_v(graph_get_vertex_s(name, graph_p), GRAPH_EDGE_OUT, 1, graph_p);
+}
+linked_list_t* graph_get_adjacents_i(int id, graph_t* graph_p)
+{
+	return graph_get_neighborhood_v(graph_get_vertex_i(id, graph_p), GRAPH_EDGE_OUT, 1, graph_p);
+}
 
 /*!
  * @abstract
