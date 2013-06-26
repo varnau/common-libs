@@ -356,11 +356,11 @@ linked_list_t* graph_get_neighborhood_v(vertex_t* vertex_p, int edge_type, int k
 }
 linked_list_t* graph_get_neighborhood_s(char* name, int edge_type, int k_jumps, graph_t* graph_p)
 {
-	graph_get_neighborhood_v(graph_get_vertex_s(name, graph_p), edge_type, k_jumps, graph_p);
+	return graph_get_neighborhood_v(graph_get_vertex_s(name, graph_p), edge_type, k_jumps, graph_p);
 }
 linked_list_t* graph_get_neighborhood_i(int vertex_id, int edge_type, int k_jumps, graph_t* graph_p)
 {
-	graph_get_neighborhood_v(graph_get_vertex_i(vertex_id, graph_p), edge_type, k_jumps, graph_p);
+	return graph_get_neighborhood_v(graph_get_vertex_i(vertex_id, graph_p), edge_type, k_jumps, graph_p);
 }
 
 linked_list_t* graph_get_adjacents_v(vertex_t* vertex_p, graph_t* graph_p);
@@ -823,6 +823,7 @@ void __graph_print_dot(char* file_name, int print_weight, graph_t* graph_p)
 	
 	if(file_name == NULL)
 		f = stdout;
+	
 	else
 		f = fopen(file_name, "w");
 	
@@ -908,17 +909,40 @@ int graph_get_size (graph_t* graph_p)
 
 int graph_grade_s(char* vertex_name, int edge_type, graph_t* graph_p)
 {
-	return linked_list_size (graph_get_neighborhood_s (vertex_name, edge_type, 1, graph_p));
+	vertex_t* v = graph_get_vertex_s (vertex_name, graph_p);
+	
+	if (v == NULL)
+		return 0;
+	else
+		return graph_grade_v (v, edge_type, graph_p);
 }
 
 int graph_grade_i(int vertex_id, int edge_type, graph_t* graph_p)
 {
-	return linked_list_size (graph_get_neighborhood_i (vertex_id, edge_type, 1, graph_p));
+	vertex_t* v = graph_get_vertex_i (vertex_id, graph_p);
+	
+	if (v == NULL)
+		return 0;
+	else
+		return graph_grade_v (v, edge_type, graph_p);
 }
 
 int graph_grade_v(vertex_t * v, int edge_type, graph_t* graph_p)
 {
-	return linked_list_size (graph_get_neighborhood_v (v, edge_type, 1, graph_p));
+	if (v == NULL)
+		return 0;
+	
+	int n_edges;
+
+	n_edges = linked_list_size(v->nd);
+
+	if (edge_type & GRAPH_EDGE_IN)
+		n_edges += linked_list_size(v->src);
+	
+	if (edge_type & GRAPH_EDGE_OUT)
+		n_edges += linked_list_size(v->dst);
+	
+	return n_edges;
 }
 
 /**
@@ -939,9 +963,9 @@ float graph_vertex_clustering_coefficient_i (int vertex_id, int edge_type, graph
 float graph_vertex_clustering_coefficient_v (vertex_t* v, int edge_type, graph_t* graph_p)
 {
 	if (v == NULL)
-		return 0;
+		return -1;
 	
-	linked_list_t * l = graph_neighborhood_v (v, edge_type, 1, graph_p);
+	linked_list_t * l = graph_get_neighborhood_v (v, edge_type, 1, graph_p);
 	int num_adjacent = linked_list_size (l);
 	int max_edges = (num_adjacent * (num_adjacent-1)/* / 2*/);
 	int curr_edges = 0;
@@ -955,18 +979,19 @@ float graph_vertex_clustering_coefficient_v (vertex_t* v, int edge_type, graph_t
 		while (v_neighbor2 != NULL)
 		{
 			if (graph_get_edge_v (v_neighbor1, v_neighbor2, edge_type, graph_p) != NULL)
+			{
 				curr_edges++;
-		
+			}
 			v_neighbor2 = (vertex_t*) linked_list_iterator_next (iter2);
 		}
 
 		v_neighbor1 = (vertex_t*) linked_list_iterator_next (iter1);
-		v_neighbor2 = (vertex_t*) linked_list_iterator_first (l);
+		v_neighbor2 = (vertex_t*) linked_list_iterator_first (iter2);
 	}
 	linked_list_iterator_free(iter1);
 	linked_list_iterator_free(iter2);
 	linked_list_free (l, NULL);
-	return (curr_edges/max_edges);
+	return (curr_edges/(float)max_edges);
 }
 
 /**

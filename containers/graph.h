@@ -194,9 +194,11 @@ int graph_get_size (graph_t*);	// edge number
 /**
  * Profiling
  */
+
 int graph_grade_s(char* vertex_name, int edge_type, graph_t*);
 int graph_grade_i(int vertex_id, int edge_type, graph_t*);
 int graph_grade_v(vertex_t* v, int edge_type, graph_t*);
+
 float graph_vertex_clustering_coefficient_s(char* vertex_name, int edge_type, graph_t*);
 float graph_vertex_clustering_coefficient_i(int vertex_id, int edge_type, graph_t*);
 float graph_vertex_clustering_coefficient_v(vertex_t* v, int edge_type, graph_t*);
