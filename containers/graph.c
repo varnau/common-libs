@@ -1,10 +1,5 @@
 #include "graph.h"
 
-//TODO
-//  Test if graph_p != NULL
-
-#define GRAPH_MAX_NAME_LENGTH 256
-
 
 /**
  * Creation and initialization
@@ -43,6 +38,7 @@ graph_t* graph_new(char mask, int initial_num_vertices, int SYNC_MODE)
 
 int graph_free(void (*vertex_data_callback) (void* vertex_data), void (*edge_data_callback) (void* edge_data), graph_t* graph_p)
 {
+	assert(graph_p);
 	graph_clear(vertex_data_callback,edge_data_callback,graph_p);
 	array_list_free(graph_p->vertices, NULL);
 	linked_list_free(graph_p->removed_vertices, NULL);
@@ -53,6 +49,7 @@ int graph_free(void (*vertex_data_callback) (void* vertex_data), void (*edge_dat
 
 int graph_clear(void (*vertex_data_callback) (void* vertex_data), void (*edge_data_callback) (void* edge_data), graph_t* graph_p)
 {
+	assert(graph_p);
 	int i;
 	vertex_t *v;
 	edge_t* e;
@@ -139,6 +136,7 @@ int graph_clear(void (*vertex_data_callback) (void* vertex_data), void (*edge_da
  
 
 int graph_find_vertex(char* name, graph_t* graph_p){
+	assert(graph_p);
 	
 	khiter_t k = kh_get(gr,graph_p->dict,name);
 	
@@ -150,6 +148,7 @@ int graph_find_vertex(char* name, graph_t* graph_p){
 
 vertex_t* graph_get_vertex_s(char* vertex_name, graph_t * graph_p)
 {
+	assert(graph_p);
 	int id = graph_find_vertex(vertex_name, graph_p);
 	if(id < 0)
 		return NULL;
@@ -158,6 +157,7 @@ vertex_t* graph_get_vertex_s(char* vertex_name, graph_t * graph_p)
 }
 vertex_t* graph_get_vertex_i(int vertex_id, graph_t * graph_p)
 {
+	assert(graph_p);
 	vertex_t* v = NULL;
 	
 	if (vertex_id < graph_p->num_vertices && vertex_id >= 0)
@@ -183,6 +183,7 @@ int graph_exists_vertex_s(char* name, graph_t* graph_p)
 
 int graph_exists_vertex_i(int id, graph_t* graph_p)
 {
+	assert(graph_p);
 	if( graph_get_vertex_i(id, graph_p) != NULL)
 		return 0;
 	else
@@ -253,6 +254,7 @@ int graph_reachable_vertex(int src, int dst, graph_t* graph_p){
 
 linked_list_t* graph_get_neighborhood_v(vertex_t* vertex_p, int edge_type, int k, graph_t* graph_p)
 {
+	assert(graph_p);
 	if(vertex_p == NULL)
 		return NULL;
 	
@@ -384,22 +386,20 @@ linked_list_t* graph_get_adjacents_i(int id, graph_t* graph_p)
  * 			-2   : Error at kh_put. It already exists on the hash_table
  * 			-3   : Error name == NULL
  */
-int graph_add_vertex(char* name, void* vertex_data, graph_t* graph_p){
+int graph_add_vertex(char* name_p, void* vertex_data, graph_t* graph_p){
 	
 	vertex_t *v;
 	
-	if (name==NULL)
+	if (name_p == NULL)
 		return -3;
 	
-	int length = strnlen(name,GRAPH_MAX_NAME_LENGTH)+1;
-	char* n = (char*)malloc(length);
-	strncpy(n, name, length);
+	char *name = strndup (name_p, GRAPH_MAX_NAME_LENGTH +1);
 	
 	int ret;
-	khiter_t k = kh_put(gr, graph_p->dict, n, &ret);
+	khiter_t k = kh_put(gr, graph_p->dict, name, &ret);
 	if (!ret){
 		//kh_del(gr, graph_p->dict, k);
-		free(n);
+		free(name);
 		return -2;
 	}
 	
@@ -413,14 +413,14 @@ int graph_add_vertex(char* name, void* vertex_data, graph_t* graph_p){
 		v = (vertex_t*)malloc(sizeof(vertex_t));
 		if(array_list_insert(v, graph_p->vertices) == 0){
 			free(v);
-			free(n);
+			free(name);
 			return -1;
 		}
 		
 		graph_p->num_vertices++;
 		v->id = array_list_size(graph_p->vertices)-1;
 	}
-	//int id = graph_find_vertex(name, g); // Even if it already exists, it has to create a new one
+	//int id = graph_find_vertex(name_p, g); // Even if it already exists, it has to create a new one
 	
 	 
 
@@ -433,7 +433,7 @@ int graph_add_vertex(char* name, void* vertex_data, graph_t* graph_p){
 	v->dst = linked_list_new(graph_p->sync_mode);
 	v->nd = linked_list_new(graph_p->sync_mode);
 	
-	v->name = n;
+	v->name = name;
 	
 	kh_value(graph_p->dict,k) = v->id;
 	
@@ -452,6 +452,7 @@ int graph_remove_vertex_s(char* vertex_name, void (*vertex_data_callback) (void*
 }
 int graph_remove_vertex_i(int vertex_id, void (*vertex_data_callback) (void* vertex_data),void (*edge_data_callback) (void* edge_data), graph_t* graph_p)
 {
+	assert(graph_p);
 	if(vertex_id < 0 || vertex_id >= graph_p->num_vertices)
 		return -1;
 	
@@ -517,6 +518,7 @@ int graph_add_edge_s(char* src, char* dst, void* edge_data, char edge_type, grap
 }
 int graph_add_edge_sw(char* src, char* dst, void* edge_data, char edge_type, float weight, graph_t* graph_p)
 {
+	assert(graph_p);
 	int s = graph_find_vertex(src,graph_p);
 	int d = graph_find_vertex(dst,graph_p);
 	return graph_add_edge_iw(s, d, edge_data, edge_type, weight, graph_p);
@@ -620,6 +622,7 @@ edge_t* graph_get_edge_i(int src, int dst, char edge_type, graph_t* graph_p)
 
 edge_t* graph_get_edge_v(vertex_t* v_src, vertex_t* v_dst, char edge_type, graph_t* graph_p)
 {
+	assert(graph_p);
 	linked_list_iterator_t *iter;
 	
 	if (v_src == NULL || v_dst == NULL)
@@ -723,7 +726,6 @@ int graph_remove_edge_s(char* src, char* dst, char edge_type, void (*edge_data_c
 }
 int graph_remove_edge_i(int src, int dst, char edge_type, void (*edge_data_callback) (void* edge_data), graph_t* graph_p)
 {
-	
 	edge_t *e = graph_get_edge_i( src, dst, edge_type, graph_p);
 	
 	if(e!=NULL)
@@ -733,6 +735,7 @@ int graph_remove_edge_i(int src, int dst, char edge_type, void (*edge_data_callb
 }
 int graph_remove_edge_e(edge_t *edge_p, char edge_type, void (*edge_data_callback) (void* edge_data), graph_t* graph_p)
 {
+	assert(graph_p);
 	if(edge_p == NULL)
 		return -1;
 	
@@ -767,6 +770,7 @@ int graph_remove_edge_e(edge_t *edge_p, char edge_type, void (*edge_data_callbac
 
 void graph_print(graph_t* graph_p)
 {
+	assert(graph_p);
 	int i;
 	vertex_t *v;
 	edge_t* e;
@@ -824,6 +828,7 @@ void graph_print(graph_t* graph_p)
 
 void __graph_print_dot(char* file_name, int print_weight, graph_t* graph_p)
 {
+	assert(graph_p);
 	FILE *f;
 	int i;
 	vertex_t *v;
@@ -905,10 +910,12 @@ void graph_print_dot_w(char* file_name, graph_t* graph_p)
 
 int graph_get_order (graph_t* graph_p)
 {
+	assert(graph_p);
 	return graph_p->num_vertices - linked_list_size(graph_p->removed_vertices);
 }
 int graph_get_size (graph_t* graph_p)
 {
+	assert(graph_p);
 	return graph_p->num_edges;
 }
 
@@ -916,28 +923,29 @@ int graph_get_size (graph_t* graph_p)
  * Profiling
  */
 
-int graph_grade_s(char* vertex_name, int edge_type, graph_t* graph_p)
+int graph_vertex_grade_s(char* vertex_name, int edge_type, graph_t* graph_p)
 {
 	vertex_t* v = graph_get_vertex_s (vertex_name, graph_p);
 	
 	if (v == NULL)
 		return 0;
 	else
-		return graph_grade_v (v, edge_type, graph_p);
+		return graph_vertex_grade_v (v, edge_type, graph_p);
 }
 
-int graph_grade_i(int vertex_id, int edge_type, graph_t* graph_p)
+int graph_vertex_grade_i(int vertex_id, int edge_type, graph_t* graph_p)
 {
 	vertex_t* v = graph_get_vertex_i (vertex_id, graph_p);
 	
 	if (v == NULL)
 		return 0;
 	else
-		return graph_grade_v (v, edge_type, graph_p);
+		return graph_vertex_grade_v (v, edge_type, graph_p);
 }
 
-int graph_grade_v(vertex_t * v, int edge_type, graph_t* graph_p)
+int graph_vertex_grade_v(vertex_t * v, int edge_type, graph_t* graph_p)
 {
+	assert(graph_p);
 	if (v == NULL)
 		return 0;
 	
@@ -971,6 +979,7 @@ float graph_vertex_clustering_coefficient_i (int vertex_id, int edge_type, graph
 
 float graph_vertex_clustering_coefficient_v (vertex_t* v, int edge_type, graph_t* graph_p)
 {
+	assert(graph_p);
 	if (v == NULL)
 		return -1;
 	
@@ -1010,6 +1019,7 @@ float graph_vertex_clustering_coefficient_v (vertex_t* v, int edge_type, graph_t
  */
 float graph_clustering_coefficient (int edge_type, graph_t* graph_p)
 {
+	assert(graph_p);
 	float cc = 0;
 	int num_adjacent, i;
 

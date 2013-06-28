@@ -9,22 +9,12 @@
  * //typedef int vertex_id; ??
  *
  * 
- * Hitos 2013-06-20:
- * 		Tipos de parametros (_s, _i, _...)
- * 		Elimina Goood
- * 		Parser salida Good	(con peso en aristas)
- * 		graph_go no recursivo
- * 
  * TODO:
  * 		Darle coherencia
- * 		check
  * 		Correcto sincronismo (sync_mode)
+ * 		doc
  * 
  * DUDAS:
- * 		#define GRAPH_STRICT			0b00010000
- * 		check no pasa el valgrind
- * 		add vertex sin nombre??
- *		opcion a dar el peso o no? add_edge_iw, add_edge_i, add_edge_sw, add_edge_w
  */
 
 #ifndef _GRAPH_H_
@@ -77,6 +67,7 @@ typedef struct graph {
 	int sync_mode;
 } graph_t;
 
+#define GRAPH_MAX_NAME_LENGTH 256
 
 ///Neigborhood edges direction
 #define GRAPH_EDGE_IN	1
@@ -195,9 +186,9 @@ int graph_get_size (graph_t*);	// edge number
  * Profiling
  */
 
-int graph_grade_s(char* vertex_name, int edge_type, graph_t*);
-int graph_grade_i(int vertex_id, int edge_type, graph_t*);
-int graph_grade_v(vertex_t* v, int edge_type, graph_t*);
+int graph_vertex_grade_s(char* vertex_name, int edge_type, graph_t*);
+int graph_vertex_grade_i(int vertex_id, int edge_type, graph_t*);
+int graph_vertex_grade_v(vertex_t* v, int edge_type, graph_t*);
 
 float graph_vertex_clustering_coefficient_s(char* vertex_name, int edge_type, graph_t*);
 float graph_vertex_clustering_coefficient_i(int vertex_id, int edge_type, graph_t*);
