@@ -22,12 +22,12 @@ void create_graph()
 	graph_add_vertex("E", NULL, g);
 
 	
-	graph_add_edge_sw("A", "B", NULL, GRAPH_DIRECTED, 1, g);
-	graph_add_edge_sw("A", "C", NULL, GRAPH_DIRECTED, 1, g);
-	graph_add_edge_sw("A", "C", NULL, GRAPH_NON_DIRECTED, 1, g);
-	graph_add_edge_sw("C", "D", NULL, GRAPH_NON_DIRECTED, 1, g);
-	graph_add_edge_sw("D", "B", NULL, GRAPH_DIRECTED, 1, g);
-	graph_add_edge_sw("C", "B", NULL, GRAPH_DIRECTED, 1, g);
+	graph_add_edge_sw("A", "B", NULL, GRAPH_EDGE_DIRECTED, 1, g);
+	graph_add_edge_sw("A", "C", NULL, GRAPH_EDGE_DIRECTED, 1, g);
+	graph_add_edge_sw("A", "C", NULL, GRAPH_EDGE_NON_DIRECTED, 1, g);
+	graph_add_edge_sw("C", "D", NULL, GRAPH_EDGE_NON_DIRECTED, 1, g);
+	graph_add_edge_sw("D", "B", NULL, GRAPH_EDGE_DIRECTED, 1, g);
+	graph_add_edge_sw("C", "B", NULL, GRAPH_EDGE_DIRECTED, 1, g);
 }
 
 void free_graph()
@@ -41,8 +41,8 @@ START_TEST(test_empty_graph) {
 	g = graph_new(GRAPH_DIRECTED | GRAPH_CYCLIC, 20, COLLECTION_MODE_ASYNCHRONIZED);
 	
 	fail_if( graph_remove_vertex_i(0, NULL, NULL, g) != -1, "Removing inexistent vertex: return should be -1");
-	fail_if( graph_remove_edge_i(0, 1, GRAPH_DIRECTED, NULL, g) != -1, "Removing inexistent vertex: return should be -1");
-	fail_if( graph_remove_edge_i(0, 0, GRAPH_DIRECTED, NULL, g) != -1, "Removing inexistent vertex: return should be -1");
+	fail_if( graph_remove_edge_i(0, 1, GRAPH_EDGE_DIRECTED, NULL, g) != -1, "Removing inexistent vertex: return should be -1");
+	fail_if( graph_remove_edge_i(0, 0, GRAPH_EDGE_DIRECTED, NULL, g) != -1, "Removing inexistent vertex: return should be -1");
 	
 	graph_free(NULL, NULL, g);
 }
@@ -61,25 +61,25 @@ START_TEST(test_small_graph) {
 	fail_if( ret < 0, "add_vertex: return should be the new id but id=%d", ret);
 	
 	
-	ret = graph_add_edge_sw("A", "B", NULL, GRAPH_DIRECTED, 2, g);
+	ret = graph_add_edge_sw("A", "B", NULL, GRAPH_EDGE_DIRECTED, 2, g);
 	fail_if( ret != 0, "add_vertex: return should be 0 but ret=%d", ret);
 	
-	ret = graph_add_edge_sw("D", "B", NULL, GRAPH_DIRECTED, 2, g);
+	ret = graph_add_edge_sw("D", "B", NULL, GRAPH_EDGE_DIRECTED, 2, g);
 	fail_if( ret != -1, "add_vertex: non existent vertex: return should be -1 but ret=%d", ret);
 	
 	ret = graph_add_edge_sw("A", "C", NULL, 9, 2, g);
 	fail_if( ret != -2, "add_vertex: non supported edge type: return should be -2 but ret=%d", ret);
 	
-	ret = graph_add_edge_sw("C", "A", NULL, GRAPH_NON_DIRECTED, 2, g);
+	ret = graph_add_edge_sw("C", "A", NULL, GRAPH_EDGE_NON_DIRECTED, 2, g);
 	fail_if( ret != -3, "add_vertex: non compatible direction type: return should be -3 but ret=%d", ret);
 	
-	ret = graph_add_edge_sw("B", "B", NULL, GRAPH_DIRECTED, 2, g);
+	ret = graph_add_edge_sw("B", "B", NULL, GRAPH_EDGE_DIRECTED, 2, g);
 	fail_if( ret != -4, "add_vertex: breaking acyclity: return should be -4 but ret=%d", ret);
 	
-	ret = graph_add_edge_sw("A", "B", NULL, GRAPH_DIRECTED, 2, g);
+	ret = graph_add_edge_sw("A", "B", NULL, GRAPH_EDGE_DIRECTED, 2, g);
 	fail_if( ret != -5, "add_vertex: breaking multiplicity: return should be -5 but ret=%d", ret);
 	
-	ret = graph_add_edge_sw("C", "B", NULL, GRAPH_DIRECTED, 2, g);
+	ret = graph_add_edge_sw("C", "B", NULL, GRAPH_EDGE_DIRECTED, 2, g);
 	fail_if( ret != 0, "add_vertex: return should be 0 but ret=%d", ret);
 	
 	//ret = graph_add_vertex(NULL, NULL, g);
@@ -111,6 +111,7 @@ START_TEST(test_cc_grade)
 	ret = graph_vertex_grade_s("C", GRAPH_EDGE_ALL, g);
 	fail_if(ret != 4, "grade_all(A): should be 4, but ret=%d", ret);
 	
+    
 	cc = graph_vertex_clustering_coefficient_s ("A", GRAPH_EDGE_OUT, g);
 	fail_if(cc != 0.5, "clustering_coefficient(A): should be 0.5, but cc=%f", cc);
 }
@@ -123,8 +124,8 @@ START_TEST(test_big_graph) {
 }
 END_TEST
 
-#define ged(s,d) graph_add_edge_i(s,d,NULL,GRAPH_DIRECTED,g)
-#define ge(s,d) graph_add_edge_i(s,d,NULL,GRAPH_NON_DIRECTED,g)
+#define ged(s,d) graph_add_edge_i(s,d,NULL,GRAPH_EDGE_DIRECTED,g)
+#define ge(s,d) graph_add_edge_i(s,d,NULL,GRAPH_EDGE_NON_DIRECTED,g)
 
 void print_v(void* vv)
 {

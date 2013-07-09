@@ -194,9 +194,10 @@ int graph_vertex_grade_v(vertex_t* v, enum EdgeDirection edge_type, graph_t*);
 float graph_vertex_clustering_coefficient_s(char* vertex_name, enum EdgeDirection edge_type, graph_t*);
 float graph_vertex_clustering_coefficient_i(int vertex_id, enum EdgeDirection edge_type, graph_t*);
 float graph_vertex_clustering_coefficient_v(vertex_t* v, enum EdgeDirection edge_type, graph_t*);
-float graph_clustering_coefficient(enum EdgeDirection edge_type, graph_t*);
+float graph_clustering_coefficient(enum EdgeDirection edge_type, graph_t*);     //FIXME
 
-void graph_plot(enum Plot_Type, graph_t*);
+
+void graph_plot(char* filename, enum Plot_Type, graph_t*);
 
 
 #endif //_GRAPH_H_

@@ -23,7 +23,7 @@ int main (void)
 	
 	graph_t *g;
 	int num_vertices = 1000000;
-	int num_edges = 10000000;
+	int num_edges = 20000000;
 	int name_length = 255;
 	char ** names;
 	int i;
@@ -58,7 +58,7 @@ int main (void)
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ini_time);//+++++++++++++++++++++++++++++++++
 	
 	for (i = 0; i < num_edges; i++)
-		graph_add_edge_iw(rand()%num_vertices, rand()%num_vertices, NULL, GRAPH_DIRECTED, 1, g);
+		graph_add_edge_iw(rand()%num_vertices, rand()%num_vertices, NULL, GRAPH_EDGE_DIRECTED, 1, g);
 	
 	stop_crono("tiempo en relenar edges aleatorios =  %d s y %ld ns\n", &ini_time);//-----------------
 	
@@ -66,8 +66,9 @@ int main (void)
 	
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ini_time);//+++++++++++++++++++++++++++++++++++
 	
-	graph_print_dot("grafo_tiempo.gv", g);
-	
+	//graph_print_dot("grafo_tiempo.gv", g);
+    graph_plot("grade_tiempo.plt",PLOT_GRADE, g);
+
 	stop_crono("tiempo en print dot: t =  %d s y %ld ns\n", &ini_time);//-----------------------
 	
 	
