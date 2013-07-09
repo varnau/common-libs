@@ -31,49 +31,47 @@ KHASH_MAP_INIT_INT(ii,int)
 
 
 typedef struct edge {
-	int src_id;
-	int dst_id;
-	void *data;
-	float weight;
-	//char* name;
-	
+    int src_id;
+    int dst_id;
+    void *data;
+    float weight;
+    //char* name;
+    
 } edge_t;
 
 typedef int vertex_id_t;
 
 typedef struct vertex {
-	void *data;
-	linked_list_t *src;
-	linked_list_t *dst;
-	linked_list_t *nd;
-	char* name;
-	vertex_id_t id;
+    void *data;
+    linked_list_t *src;
+    linked_list_t *dst;
+    linked_list_t *nd;
+    char* name;
+    vertex_id_t id;
 } vertex_t;
 
 typedef struct graph {
-	khash_t(gr) *dict;
-	array_list_t *vertices;
-	linked_list_t *removed_vertices;
-	int num_vertices;	//()
-	int num_edges;		//()
-	
-	short int directed;	//si, no y mixto
-	short int cyclic;
-	short int multiple;
-	short int strict;
-	short int non_negative;
-	//reemplazar todo por una mascara?
-	
-	int sync_mode;
+    khash_t(gr) *dict;
+    array_list_t *vertices;
+    linked_list_t *removed_vertices;
+    int num_vertices;	//()
+    int num_edges;		//()
+    
+    short int directed;	//si, no y mixto
+    short int cyclic;
+    short int multiple;
+    short int strict;
+    short int non_negative;
+    //reemplazar todo por una mascara?
+    
+    int sync_mode;
 } graph_t;
 
 #define GRAPH_MAX_NAME_LENGTH 256
 
 ///Neigborhood edges direction
-#define GRAPH_EDGE_IN	1
-#define GRAPH_EDGE_OUT	2
-#define GRAPH_EDGE_ALL	3
-
+enum EdgeDirection {GRAPH_EDGE_IN = 1, GRAPH_EDGE_OUT = 2, GRAPH_EDGE_ALL = 3};
+enum EdgeType {GRAPH_EDGE_DIRECTED, GRAPH_EDGE_NON_DIRECTED};
 
 ///Generation Graph type mask
 #define GRAPH_NON_DIRECTED			0b00000001
@@ -84,6 +82,9 @@ typedef struct graph {
 #define GRAPH_STRICT				0b00001000
 #define GRAPH_NON_NEGATIVE_WEIGHT	0b00010000
 //#define GRAPH_MULTIPLE			0b00010000
+
+///Plot Types
+enum Plot_Type {PLOT_GRADE};
 
 /**
  * Creation and initialization
@@ -119,9 +120,9 @@ void* graph_get_vertex_data_i(int id, graph_t*);
 
 
 
-linked_list_t* graph_get_neighborhood_v(vertex_t* vertex_p, int edge_type, int k_jumps, graph_t*);
-linked_list_t* graph_get_neighborhood_s(char* name, int edge_type, int k_jumps, graph_t*);
-linked_list_t* graph_get_neighborhood_i(int vertex_id, int edge_type, int k_jumps, graph_t*);
+linked_list_t* graph_get_neighborhood_v(vertex_t* vertex_p, enum EdgeDirection edge_type, int k_jumps, graph_t*);
+linked_list_t* graph_get_neighborhood_s(char* name, enum EdgeDirection edge_type, int k_jumps, graph_t*);
+linked_list_t* graph_get_neighborhood_i(int vertex_id, enum EdgeDirection edge_type, int k_jumps, graph_t*);
 
 linked_list_t* graph_get_adjacents_v(vertex_t* vertex_p, graph_t*);
 linked_list_t* graph_get_adjacents_s(char* name, graph_t*);
@@ -155,18 +156,18 @@ int graph_remove_vertex_i(int vertex_id, void (*vertex_data_callback) (void* ver
 /**
  * Edge Functions
  */
-int graph_add_edge_s(char* src, char* dst, void* edge_data, char edge_type, graph_t*);
-int graph_add_edge_i(int src, int dst, void* edge_data, char edge_type, graph_t*);
-int graph_add_edge_sw(char* src, char* dst, void* edge_data, char edge_type, float weight, graph_t*);
-int graph_add_edge_iw(int src, int dst, void* edge_data, char edge_type, float weight, graph_t*);
+int graph_add_edge_s(char* src, char* dst, void* edge_data, enum EdgeType edge_type, graph_t*);
+int graph_add_edge_i(int src, int dst, void* edge_data, enum EdgeType edge_type, graph_t*);
+int graph_add_edge_sw(char* src, char* dst, void* edge_data, enum EdgeType edge_type, float weight, graph_t*);
+int graph_add_edge_iw(int src, int dst, void* edge_data, enum EdgeType edge_type, float weight, graph_t*);
 
-int graph_remove_edge_s(char* src, char* dst, char edge_type, void (*edge_data_callback) (void* edge_data), graph_t*);
-int graph_remove_edge_i(int src, int dst, char edge_type, void (*edge_data_callback) (void* edge_data), graph_t*);
-int graph_remove_edge_e(edge_t *edge_p, char edge_type, void (*edge_data_callback) (void* edge_data), graph_t*);
+int graph_remove_edge_s(char* src, char* dst, enum EdgeType edge_type, void (*edge_data_callback) (void* edge_data), graph_t*);
+int graph_remove_edge_i(int src, int dst, enum EdgeType edge_type, void (*edge_data_callback) (void* edge_data), graph_t*);
+int graph_remove_edge_e(edge_t *edge_p, enum EdgeType edge_type, void (*edge_data_callback) (void* edge_data), graph_t*);
 
-edge_t* graph_get_edge_s(char* src, char* dst, char edge_type, graph_t*);
-edge_t* graph_get_edge_i(int src, int dst, char edge_type, graph_t*);
-edge_t* graph_get_edge_v(vertex_t* v_src, vertex_t* v_dst, char edge_type, graph_t*);
+edge_t* graph_get_edge_s(char* src, char* dst, enum EdgeType edge_type, graph_t*);
+edge_t* graph_get_edge_i(int src, int dst, enum EdgeType edge_type, graph_t*);
+edge_t* graph_get_edge_v(vertex_t* v_src, vertex_t* v_dst, enum EdgeType edge_type, graph_t*);
 
 /**
  * Path Functions
@@ -186,12 +187,16 @@ int graph_get_size (graph_t*);	// edge number
  * Profiling
  */
 
-int graph_vertex_grade_s(char* vertex_name, int edge_type, graph_t*);
-int graph_vertex_grade_i(int vertex_id, int edge_type, graph_t*);
-int graph_vertex_grade_v(vertex_t* v, int edge_type, graph_t*);
+int graph_vertex_grade_s(char* vertex_name, enum EdgeDirection edge_type, graph_t*);
+int graph_vertex_grade_i(int vertex_id, enum EdgeDirection edge_type, graph_t*);
+int graph_vertex_grade_v(vertex_t* v, enum EdgeDirection edge_type, graph_t*);
 
-float graph_vertex_clustering_coefficient_s(char* vertex_name, int edge_type, graph_t*);
-float graph_vertex_clustering_coefficient_i(int vertex_id, int edge_type, graph_t*);
-float graph_vertex_clustering_coefficient_v(vertex_t* v, int edge_type, graph_t*);
-float graph_clustering_coefficient(int edge_type, graph_t*);
+float graph_vertex_clustering_coefficient_s(char* vertex_name, enum EdgeDirection edge_type, graph_t*);
+float graph_vertex_clustering_coefficient_i(int vertex_id, enum EdgeDirection edge_type, graph_t*);
+float graph_vertex_clustering_coefficient_v(vertex_t* v, enum EdgeDirection edge_type, graph_t*);
+float graph_clustering_coefficient(enum EdgeDirection edge_type, graph_t*);
+
+void graph_plot(enum Plot_Type, graph_t*);
+
+
 #endif //_GRAPH_H_
