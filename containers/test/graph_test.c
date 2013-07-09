@@ -13,113 +13,131 @@ Suite *create_test_suite(void);
 
 void create_graph()
 {
-	g = graph_new(GRAPH_MIXED_DIRECTED | GRAPH_CYCLIC, 20, COLLECTION_MODE_ASYNCHRONIZED);
+    g = graph_new(GRAPH_MIXED_DIRECTED | GRAPH_CYCLIC, 20, COLLECTION_MODE_ASYNCHRONIZED);
 
-	graph_add_vertex("A", NULL, g);
-	graph_add_vertex("B", NULL, g);
-	graph_add_vertex("C", NULL, g);
-	graph_add_vertex("D", NULL, g);
-	graph_add_vertex("E", NULL, g);
+    graph_add_vertex("A", NULL, g);
+    graph_add_vertex("B", NULL, g);
+    graph_add_vertex("C", NULL, g);
+    graph_add_vertex("D", NULL, g);
+    graph_add_vertex("E", NULL, g);
 
-	
-	graph_add_edge_sw("A", "B", NULL, GRAPH_DIRECTED, 1, g);
-	graph_add_edge_sw("A", "C", NULL, GRAPH_DIRECTED, 1, g);
-	graph_add_edge_sw("A", "C", NULL, GRAPH_NON_DIRECTED, 1, g);
-	graph_add_edge_sw("C", "D", NULL, GRAPH_NON_DIRECTED, 1, g);
-	graph_add_edge_sw("D", "B", NULL, GRAPH_DIRECTED, 1, g);
-	graph_add_edge_sw("C", "B", NULL, GRAPH_DIRECTED, 1, g);
+
+    graph_add_edge_sw("A", "B", NULL, GRAPH_EDGE_DIRECTED, 1, g);
+    graph_add_edge_sw("A", "C", NULL, GRAPH_EDGE_DIRECTED, 1, g);
+    graph_add_edge_sw("A", "C", NULL, GRAPH_EDGE_NON_DIRECTED, 1, g);
+    graph_add_edge_sw("C", "D", NULL, GRAPH_EDGE_NON_DIRECTED, 1, g);
+    graph_add_edge_sw("D", "B", NULL, GRAPH_EDGE_DIRECTED, 1, g);
+    graph_add_edge_sw("C", "B", NULL, GRAPH_EDGE_DIRECTED, 1, g);
 }
 
 void free_graph()
 {
-	graph_free(NULL, NULL, g);
+    graph_free(NULL, NULL, g);
 }
 
 
 START_TEST(test_empty_graph) {
-	
-	g = graph_new(GRAPH_DIRECTED | GRAPH_CYCLIC, 20, COLLECTION_MODE_ASYNCHRONIZED);
-	
-	fail_if( graph_remove_vertex_i(0, NULL, NULL, g) != -1, "Removing inexistent vertex: return should be -1");
-	fail_if( graph_remove_edge_i(0, 1, GRAPH_DIRECTED, NULL, g) != -1, "Removing inexistent vertex: return should be -1");
-	fail_if( graph_remove_edge_i(0, 0, GRAPH_DIRECTED, NULL, g) != -1, "Removing inexistent vertex: return should be -1");
-	
-	graph_free(NULL, NULL, g);
+
+    g = graph_new(GRAPH_DIRECTED | GRAPH_CYCLIC, 20, COLLECTION_MODE_ASYNCHRONIZED);
+
+    fail_if( graph_remove_vertex_i(0, NULL, NULL, g) != -1, "Removing inexistent vertex: return should be -1");
+    fail_if( graph_remove_edge_i(0, 1, GRAPH_DIRECTED, NULL, g) != -1, "Removing inexistent vertex: return should be -1");
+    fail_if( graph_remove_edge_i(0, 0, GRAPH_DIRECTED, NULL, g) != -1, "Removing inexistent vertex: return should be -1");
+
+    graph_free(NULL, NULL, g);
 }
 END_TEST
 
 
 START_TEST(test_small_graph) {
-	
-	g = graph_new(GRAPH_DIRECTED | GRAPH_ACYCLIC |GRAPH_STRICT, 20, COLLECTION_MODE_ASYNCHRONIZED);
-	int ret = graph_add_vertex("A", NULL, g);
-	
-	fail_if( ret < 0, "add_vertex: return should be the new id but id=%d", ret);
-	ret = graph_add_vertex("B", NULL, g);
-	fail_if( ret < 0, "add_vertex: return should be the new id but id=%d", ret);
-	ret = graph_add_vertex("C", NULL, g);
-	fail_if( ret < 0, "add_vertex: return should be the new id but id=%d", ret);
-	
-	
-	ret = graph_add_edge_sw("A", "B", NULL, GRAPH_DIRECTED, 2, g);
-	fail_if( ret != 0, "add_vertex: return should be 0 but ret=%d", ret);
-	
-	ret = graph_add_edge_sw("D", "B", NULL, GRAPH_DIRECTED, 2, g);
-	fail_if( ret != -1, "add_vertex: non existent vertex: return should be -1 but ret=%d", ret);
-	
-	ret = graph_add_edge_sw("A", "C", NULL, 9, 2, g);
-	fail_if( ret != -2, "add_vertex: non supported edge type: return should be -2 but ret=%d", ret);
-	
-	ret = graph_add_edge_sw("C", "A", NULL, GRAPH_NON_DIRECTED, 2, g);
-	fail_if( ret != -3, "add_vertex: non compatible direction type: return should be -3 but ret=%d", ret);
-	
-	ret = graph_add_edge_sw("B", "B", NULL, GRAPH_DIRECTED, 2, g);
-	fail_if( ret != -4, "add_vertex: breaking acyclity: return should be -4 but ret=%d", ret);
-	
-	ret = graph_add_edge_sw("A", "B", NULL, GRAPH_DIRECTED, 2, g);
-	fail_if( ret != -5, "add_vertex: breaking multiplicity: return should be -5 but ret=%d", ret);
-	
-	ret = graph_add_edge_sw("C", "B", NULL, GRAPH_DIRECTED, 2, g);
-	fail_if( ret != 0, "add_vertex: return should be 0 but ret=%d", ret);
-	
-	//ret = graph_add_vertex(NULL, NULL, g);
-	//fail_if( ret < 10, "add_vertex: return should be the new id but id=%d", ret);
-	
-	//graph_print(g);
-	
-	graph_print_dot("check_graph.gv", g);
-	
-	graph_free(NULL, NULL, g);
+
+    g = graph_new(GRAPH_DIRECTED | GRAPH_ACYCLIC |GRAPH_STRICT, 20, COLLECTION_MODE_ASYNCHRONIZED);
+    int ret = graph_add_vertex("A", NULL, g);
+
+    fail_if( ret < 0, "add_vertex: return should be the new id but id=%d", ret);
+    ret = graph_add_vertex("B", NULL, g);
+    fail_if( ret < 0, "add_vertex: return should be the new id but id=%d", ret);
+    ret = graph_add_vertex("C", NULL, g);
+    fail_if( ret < 0, "add_vertex: return should be the new id but id=%d", ret);
+
+
+    ret = graph_add_edge_sw("A", "B", NULL, GRAPH_DIRECTED, 2, g);
+    fail_if( ret != 0, "add_vertex: return should be 0 but ret=%d", ret);
+
+    ret = graph_add_edge_sw("D", "B", NULL, GRAPH_DIRECTED, 2, g);
+    fail_if( ret != -1, "add_vertex: non existent vertex: return should be -1 but ret=%d", ret);
+
+    ret = graph_add_edge_sw("A", "C", NULL, 9, 2, g);
+    fail_if( ret != -2, "add_vertex: non supported edge type: return should be -2 but ret=%d", ret);
+
+    ret = graph_add_edge_sw("C", "A", NULL, GRAPH_NON_DIRECTED, 2, g);
+    fail_if( ret != -3, "add_vertex: non compatible direction type: return should be -3 but ret=%d", ret);
+
+    ret = graph_add_edge_sw("B", "B", NULL, GRAPH_DIRECTED, 2, g);
+    fail_if( ret != -4, "add_vertex: breaking acyclity: return should be -4 but ret=%d", ret);
+
+    ret = graph_add_edge_sw("A", "B", NULL, GRAPH_DIRECTED, 2, g);
+    fail_if( ret != -5, "add_vertex: breaking multiplicity: return should be -5 but ret=%d", ret);
+
+    ret = graph_add_edge_sw("C", "B", NULL, GRAPH_DIRECTED, 2, g);
+    fail_if( ret != 0, "add_vertex: return should be 0 but ret=%d", ret);
+
+    //ret = graph_add_vertex(NULL, NULL, g);
+    //fail_if( ret < 10, "add_vertex: return should be the new id but id=%d", ret);
+
+    //graph_print(g);
+
+    graph_print_dot("check_graph.gv", g);
+
+    graph_free(NULL, NULL, g);
 }
 END_TEST
 
 
 START_TEST(test_cc_grade)
 {
-	int ret;
-	float cc;
-	graph_print_dot("check_graph_cc.gv", g);
-	graph_print(g);
-	
-	ret = graph_vertex_grade_s("A", GRAPH_EDGE_OUT, g);
-	fail_if(ret != 3, "grade(A): should be 3, but ret=%d", ret);
+    int ret;
+    float cc;
+    graph_print_dot("check_graph_cc.gv", g);
+    graph_print(g);
 
-	ret = graph_vertex_grade_s("C", GRAPH_EDGE_IN, g);
-	fail_if(ret != 3, "grade_in(A): should be 3, but ret=%d", ret);
-	ret = graph_vertex_grade_s("C", GRAPH_EDGE_OUT, g);
-	fail_if(ret != 3, "grade_out(A): should be 3, but ret=%d", ret);
-	ret = graph_vertex_grade_s("C", GRAPH_EDGE_ALL, g);
-	fail_if(ret != 4, "grade_all(A): should be 4, but ret=%d", ret);
-	
-	cc = graph_vertex_clustering_coefficient_s ("A", GRAPH_EDGE_OUT, g);
-	fail_if(cc != 0.5, "clustering_coefficient(A): should be 0.5, but cc=%f", cc);
+    ret = graph_vertex_grade_s("A", GRAPH_EDGE_OUT, g);
+    fail_if(ret != 3, "grade(A): should be 3, but ret=%d", ret);
+
+    ret = graph_vertex_grade_s("C", GRAPH_EDGE_IN, g);
+    fail_if(ret != 3, "grade_in(A): should be 3, but ret=%d", ret);
+    ret = graph_vertex_grade_s("C", GRAPH_EDGE_OUT, g);
+    fail_if(ret != 3, "grade_out(A): should be 3, but ret=%d", ret);
+    ret = graph_vertex_grade_s("C", GRAPH_EDGE_ALL, g);
+    fail_if(ret != 4, "grade_all(A): should be 4, but ret=%d", ret);
+
+    cc = graph_vertex_clustering_coefficient_s ("A", GRAPH_EDGE_OUT, g);
+    fail_if(cc != 0.5, "clustering_coefficient(A): should be 0.5, but cc=%f", cc);
+}
+END_TEST
+
+START_TEST(test_dijkstra)
+{
+    int i;
+    path_node_t * p;
+    
+    //graph_print_dot("check_graph_cc.gv", g);
+    //graph_print(g);
+
+    p = graph_run_dijkstra (graph_get_vertex_s ("A", g), GRAPH_EDGE_DIRECTED, g);
+    
+    printf("ID\t\tDist\t\tFather\n");
+    for (i = 0; i < graph_get_order(g); i++)
+    {
+        printf("%d\t\t%f\t\t%d", i, p->distance, p->father);
+    }
 }
 END_TEST
 
 
 
 START_TEST(test_big_graph) {
-	
+
 }
 END_TEST
 
@@ -128,44 +146,44 @@ END_TEST
 
 void print_v(void* vv)
 {
-	vertex_t *v = (vertex_t*)vv;
-	if(vv != NULL)
-//		printf("%p(%s,%d), ",v,v->name, v->id);
-		printf("%d, ",v->id);
-	else
-		printf("NULL, ");
+    vertex_t *v = (vertex_t*)vv;
+    if(vv != NULL)
+        //		printf("%p(%s,%d), ",v,v->name, v->id);
+        printf("%d, ",v->id);
+    else
+        printf("NULL, ");
 }
 
 START_TEST(test_neighbor_k_level) {
-	g = graph_new(GRAPH_MIXED_DIRECTED | GRAPH_CYCLIC |GRAPH_STRICT, 300, COLLECTION_MODE_ASYNCHRONIZED);
-	char name[255];
-	
-	const int num_vertices = 8;
-	
-	int i;
+    g = graph_new(GRAPH_MIXED_DIRECTED | GRAPH_CYCLIC |GRAPH_STRICT, 300, COLLECTION_MODE_ASYNCHRONIZED);
+    char name[255];
 
-	for(i = 0; i < num_vertices; i++)
-	{
-		sprintf(name, "%d",i);
-		graph_add_vertex(name,NULL, g);
-		//printf("Added %s as %d\n",name, graph_add_vertex(name,NULL, g)); 
-	}
-	
-	ge(0,1);
-	ge(0,2);
-	ge(1,3);
-	ge(2,3);
-	ge(1,5);
-	ge(5,6);
-	ge(5,7);
-	ge(7,4);
-	
-	linked_list_t *l = graph_get_neighborhood_i(0,GRAPH_EDGE_ALL, 3, g);
-	linked_list_print(l, print_v);
+    const int num_vertices = 8;
 
-	graph_print_dot("graph_nh.gv",g);
-	graph_free(NULL, NULL, g);
-	
+    int i;
+
+    for(i = 0; i < num_vertices; i++)
+    {
+        sprintf(name, "%d",i);
+        graph_add_vertex(name,NULL, g);
+        //printf("Added %s as %d\n",name, graph_add_vertex(name,NULL, g)); 
+    }
+
+    ge(0,1);
+    ge(0,2);
+    ge(1,3);
+    ge(2,3);
+    ge(1,5);
+    ge(5,6);
+    ge(5,7);
+    ge(7,4);
+
+    linked_list_t *l = graph_get_neighborhood_i(0,GRAPH_EDGE_ALL, 3, g);
+    linked_list_print(l, print_v);
+
+    graph_print_dot("graph_nh.gv",g);
+    graph_free(NULL, NULL, g);
+
 
 }
 END_TEST
@@ -186,25 +204,26 @@ int main (int argc, char *argv) {
 
 
 Suite *create_test_suite(void) {
-	TCase *tc_create_free = tcase_create("Create and free");
-	
+    TCase *tc_create_free = tcase_create("Create and free");
+
     //tcase_add_checked_fixture(tc_create_free, create_graph, free_graph);
     tcase_add_test(tc_create_free, test_empty_graph);
     tcase_add_test(tc_create_free, test_small_graph);
     tcase_add_test(tc_create_free, test_big_graph);
     tcase_add_test(tc_create_free, test_neighbor_k_level);
     //tcase_add_test(tc_create_free, test_create_free);
-    
+
     TCase *tc_profiling = tcase_create("Profiling");
-	tcase_add_test(tc_profiling, test_cc_grade);
+    tcase_add_test(tc_profiling, test_cc_grade);
+    tcase_add_test(tc_profiling, test_dijkstra);
     tcase_add_checked_fixture(tc_profiling, create_graph, free_graph);
     //tcase_add_test(tc_iterators, test_iterators);
-    
+
     // Add test cases to a test suite
     Suite *fs = suite_create("Graph");
     suite_add_tcase(fs, tc_create_free);
     suite_add_tcase(fs, tc_profiling);
-    
+
     return fs;
 }
 
@@ -229,111 +248,111 @@ void foo()
 
 void free_cond(void* c)
 {
-	if(c)
-		free(c);
+if(c)
+free(c);
 }
 
 void* new_mem(const char* c)
 {
-	return NULL;
-	char* v = malloc(20);
-	int i;
-	for(i = 0; i < 20 && c[i] != 0; i++)
-		v[i]=c[i];
-	v[i] = 0;
-	return v;
+return NULL;
+char* v = malloc(20);
+int i;
+for(i = 0; i < 20 && c[i] != 0; i++)
+v[i]=c[i];
+v[i] = 0;
+return v;
 }
 
 int main()
 {
-	printf("Holamundo\n");
-	
-	g = graph_new(GRAPH_MIXED_DIRECTED | GRAPH_ACYCLIC, 20, COLLECTION_MODE_ASYNCHRONIZED);
-	
-	
-	graph_add_vertex("A", NULL, g);
-	graph_add_vertex("B", NULL, g);
-	graph_add_vertex("C", NULL, g);
-	graph_add_vertex("D", malloc(29), g);
-	
-	graph_add_edge_i(0,1, new_mem("Hola"), GRAPH_DIRECTED,2, g);
-	graph_add_edge_i(1,2, new_mem("Hola"), GRAPH_DIRECTED,2, g);
-	void* v = malloc(23);
-	if(graph_add_edge_i(2,0, v, GRAPH_DIRECTED,2, g)<0)
-		free(v);
-	
-	
-	graph_print(g);
-	printf("Clear\n");
-	graph_clear(free_cond,free_cond,g);
-	
-	graph_add_vertex("A", NULL, g);
-	graph_add_vertex("S", NULL, g);
-	graph_add_vertex("D", NULL, g);
-	graph_add_vertex("F", NULL, g);
-	graph_add_vertex("G", NULL, g);
+printf("Holamundo\n");
 
-	graph_add_edge_s("A","S",NULL,GRAPH_DIRECTED,2,g);
-	graph_add_edge_s("S","D",NULL,GRAPH_DIRECTED,2,g);
-	graph_add_edge_s("S","D",NULL,GRAPH_DIRECTED,2,g);
-	graph_add_edge_s("G","D",NULL,GRAPH_DIRECTED,2,g);
-	graph_add_edge_s("A","D",NULL,GRAPH_NON_DIRECTED,2,g);
-	graph_add_edge_s("D","D",NULL,GRAPH_DIRECTED,2,g);
-	graph_add_edge_s("A","F",NULL,GRAPH_NON_DIRECTED,2,g);
-	
-	
-	graph_add_edge_s("F","G",new_mem("Pepe"),GRAPH_DIRECTED,2,g);
-	graph_add_edge_s("F","G",new_mem("Pepon"),GRAPH_DIRECTED,2,g);
-	graph_add_edge_s("F","G",new_mem("Null"),GRAPH_DIRECTED,2,g);
-	               
-	
-	graph_add_edge_s("G","S",NULL,GRAPH_NON_DIRECTED,9,g);
-	graph_add_edge_s("F","S",NULL,GRAPH_DIRECTED,2,g);
+g = graph_new(GRAPH_MIXED_DIRECTED | GRAPH_ACYCLIC, 20, COLLECTION_MODE_ASYNCHRONIZED);
 
-	edge_t * e = graph_get_edge_i(3,4,GRAPH_DIRECTED,g);
-	if(e != NULL)
-		printf("Edge Tomado %s\n",(char*)e->data);
-	graph_remove_edge_e(e,GRAPH_DIRECTED,free_cond,g);
-	graph_remove_edge_s("A","S",GRAPH_DIRECTED,free_cond,g);
-	graph_remove_edge_s("A","Sasdfasd",GRAPH_DIRECTED,free_cond,g);
-	graph_remove_edge_s("A","G",GRAPH_DIRECTED,free_cond,g);
-	//printf("Edge Eliminado\n");
-	
-	
-	//graph_print(g);
-	//printf("Go go to Eliminar vertice\n");
-	//graph_remove_vertex_s("A",NULL,free_cond,g);
-	
-	//graph_add_vertex("GAUSON", NULL, g);
-/*	linked_list_iterator_t *iter = linked_list_iterator_new(l);
-	char* c = (char*)linked_list_iterator_curr(iter);
-	while(c != NULL)
-	{
-		printf("CHAR DEL LINKED : %s\n",c);
-		c = (char*)linked_list_iterator_next(iter);
-		
-	}
-	linked_list_iterator_free(iter);
-	linked_list_free(l, NULL);
-	*/
-	/*
-	graph_add_edge_s("GAUSON", "F", NULL, GRAPH_NON_DIRECTED,3.1415, g);
-	graph_add_edge_s("GAUSON", "F", NULL, GRAPH_DIRECTED,2, g);
-	graph_add_edge_s("F", "GAUSON", NULL, GRAPH_DIRECTED,1.618, g);
-	
-	
-	//graph_remove_vertex_s("dsfg",NULL,free_cond,g);
-	//graph_remove_vertex_s("S",NULL,free_cond,g);
-	
-	graph_print(g);
-	
-	graph_print_dot("grafo.gv",g);
-	
-	//printf("Existe camino entre 0 y 3? %d\n", graph_path_exists(0,3,g));
-	
-	graph_free(NULL,free_cond,g);
-	
-	return 0;
-}
 
-*/
+graph_add_vertex("A", NULL, g);
+graph_add_vertex("B", NULL, g);
+graph_add_vertex("C", NULL, g);
+graph_add_vertex("D", malloc(29), g);
+
+graph_add_edge_i(0,1, new_mem("Hola"), GRAPH_DIRECTED,2, g);
+graph_add_edge_i(1,2, new_mem("Hola"), GRAPH_DIRECTED,2, g);
+void* v = malloc(23);
+if(graph_add_edge_i(2,0, v, GRAPH_DIRECTED,2, g)<0)
+free(v);
+
+
+graph_print(g);
+printf("Clear\n");
+graph_clear(free_cond,free_cond,g);
+
+graph_add_vertex("A", NULL, g);
+graph_add_vertex("S", NULL, g);
+graph_add_vertex("D", NULL, g);
+graph_add_vertex("F", NULL, g);
+graph_add_vertex("G", NULL, g);
+
+graph_add_edge_s("A","S",NULL,GRAPH_DIRECTED,2,g);
+graph_add_edge_s("S","D",NULL,GRAPH_DIRECTED,2,g);
+graph_add_edge_s("S","D",NULL,GRAPH_DIRECTED,2,g);
+graph_add_edge_s("G","D",NULL,GRAPH_DIRECTED,2,g);
+graph_add_edge_s("A","D",NULL,GRAPH_NON_DIRECTED,2,g);
+graph_add_edge_s("D","D",NULL,GRAPH_DIRECTED,2,g);
+graph_add_edge_s("A","F",NULL,GRAPH_NON_DIRECTED,2,g);
+
+
+graph_add_edge_s("F","G",new_mem("Pepe"),GRAPH_DIRECTED,2,g);
+graph_add_edge_s("F","G",new_mem("Pepon"),GRAPH_DIRECTED,2,g);
+graph_add_edge_s("F","G",new_mem("Null"),GRAPH_DIRECTED,2,g);
+
+
+graph_add_edge_s("G","S",NULL,GRAPH_NON_DIRECTED,9,g);
+graph_add_edge_s("F","S",NULL,GRAPH_DIRECTED,2,g);
+
+edge_t * e = graph_get_edge_i(3,4,GRAPH_DIRECTED,g);
+if(e != NULL)
+    printf("Edge Tomado %s\n",(char*)e->data);
+    graph_remove_edge_e(e,GRAPH_DIRECTED,free_cond,g);
+    graph_remove_edge_s("A","S",GRAPH_DIRECTED,free_cond,g);
+    graph_remove_edge_s("A","Sasdfasd",GRAPH_DIRECTED,free_cond,g);
+    graph_remove_edge_s("A","G",GRAPH_DIRECTED,free_cond,g);
+    //printf("Edge Eliminado\n");
+
+
+    //graph_print(g);
+    //printf("Go go to Eliminar vertice\n");
+    //graph_remove_vertex_s("A",NULL,free_cond,g);
+
+    //graph_add_vertex("GAUSON", NULL, g);
+    /*	linked_list_iterator_t *iter = linked_list_iterator_new(l);
+        char* c = (char*)linked_list_iterator_curr(iter);
+        while(c != NULL)
+        {
+        printf("CHAR DEL LINKED : %s\n",c);
+        c = (char*)linked_list_iterator_next(iter);
+
+        }
+        linked_list_iterator_free(iter);
+        linked_list_free(l, NULL);
+     */
+    /*
+       graph_add_edge_s("GAUSON", "F", NULL, GRAPH_NON_DIRECTED,3.1415, g);
+       graph_add_edge_s("GAUSON", "F", NULL, GRAPH_DIRECTED,2, g);
+       graph_add_edge_s("F", "GAUSON", NULL, GRAPH_DIRECTED,1.618, g);
+
+
+    //graph_remove_vertex_s("dsfg",NULL,free_cond,g);
+    //graph_remove_vertex_s("S",NULL,free_cond,g);
+
+    graph_print(g);
+
+    graph_print_dot("grafo.gv",g);
+
+    //printf("Existe camino entre 0 y 3? %d\n", graph_path_exists(0,3,g));
+
+    graph_free(NULL,free_cond,g);
+
+    return 0;
+    }
+
+     */

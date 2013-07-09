@@ -1032,3 +1032,82 @@ float graph_clustering_coefficient (enum EdgeDirection edge_type, graph_t* graph
 }
 
 
+path_node_t * graph_run_dijkstra (vertex_t *orig, enum EdgeType edge_type, graph_t * graph_p)
+{
+    assert(graph_p->non_negative);
+
+    path_node_t * dists = (path_node_t*) calloc (graph_p->num_vertices, sizeof(path_node_t));   // distances table
+    linked_list_t * unvisited = linked_list_new (COLLECTION_MODE_ASYNCHRONIZED);    // unvisited queue
+    linked_list_iterator_t *iter = linked_list_iterator_new(unvisited); // unvisited iterator
+    linked_list_iterator_t *iter_edge = linked_list_iterator_new(unvisited);    // edge iterator within a vertex
+    
+    int directed_path = edge_type & GRAPH_EDGE_DIRECTED;
+    int non_directed_path = edge_type & GRAPH_EDGE_NON_DIRECTED;
+    vertex_t *v;
+    edge_t * e;
+    
+    int i;
+    for (i = 0; i < graph_p->num_vertices; i++)
+    {
+        dists[i].distance = FLT_MAX;
+        dists[i].father = -1;
+        dists[i].visited = 0;
+    }
+    
+    dists[orig->id].distance = 0;
+    dists[orig->id].father = orig->id;
+    dists[orig->id].visited = 1;
+    
+    linked_list_insert_last(v, unvisited);
+    v = linked_list_iterator_first(iter);
+
+    while (v)
+    {
+        if (dists[v->id].visited == 0)  // not visited yet
+        {
+            if(directed_path)
+            {
+                linked_list_iterator_init(v->dst, iter_edge);
+                e = linked_list_iterator_curr(iter_edge);
+                while(e != NULL)
+                {
+                    if (dists[e->dst_id].visited == 0)
+                    {
+                        linked_list_insert_last( array_list_get(e->dst_id, graph_p->vertices), unvisited); 	//inserts in the unvisited queue
+                        dists[e->dst_id].visited = 1;
+                    }
+//FIXME preallocate values
+                    if (dists[e->dst_id].distance == FLT_MAX || dists[e->dst_id].distance > dists[v->id].distance + e->weight)   // better path found
+                    {
+                        dists[e->dst_id].distance = dists[v->id].distance + e->weight;
+                        dists[e->dst_id].father = v->id;
+                    }
+                    e = (edge_t*)linked_list_iterator_next(iter_edge);
+                }
+            }
+            /*
+            if(non_directed_path){
+                linked_list_iterator_init(v->nd, iter_edge);
+                e = linked_list_iterator_curr(iter_edge);
+                while(e != NULL)
+                {
+                    dst = (e->dst_id!=v->id)? e->dst_id: e->src_id;
+
+                    kh_put(ii,visited,dst,&ret);
+                    if(ret != 0){
+                        linked_list_insert_last( array_list_get(dst, graph_p->vertices), queue); 	//inserts in the queue
+                    }
+                    //printf("Inserted %d, ret=%d\n", dst, ret);
+
+                    e= (edge_t*)linked_list_iterator_next(iter_edge);
+                }
+            }
+*/
+        }
+        v = linked_list_iterator_first(iter);
+    }
+    linked_list_iterator_free(iter);
+    linked_list_iterator_free(iter_edge);
+    linked_list_free(unvisited, NULL);
+    return dists;
+}

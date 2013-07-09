@@ -20,7 +20,7 @@
 #ifndef _GRAPH_H_
 #define _GRAPH_H_
 
-
+#include <float.h>
 #include "linked_list.h"
 #include "array_list.h"
 #include "containers.h"
@@ -67,11 +67,20 @@ typedef struct graph {
     int sync_mode;
 } graph_t;
 
+
+typedef struct path_node
+{
+    float distance;
+    char visited;
+    int father;
+} path_node_t;
+
+
 #define GRAPH_MAX_NAME_LENGTH 256
 
 ///Neigborhood edges direction
 enum EdgeDirection {GRAPH_EDGE_IN = 1, GRAPH_EDGE_OUT = 2, GRAPH_EDGE_ALL = 3};
-enum EdgeType {GRAPH_EDGE_DIRECTED, GRAPH_EDGE_NON_DIRECTED};
+enum EdgeType {GRAPH_EDGE_DIRECTED = 1, GRAPH_EDGE_NON_DIRECTED = 2};
 
 ///Generation Graph type mask
 #define GRAPH_NON_DIRECTED			0b00000001
@@ -198,5 +207,6 @@ float graph_clustering_coefficient(enum EdgeDirection edge_type, graph_t*);
 
 void graph_plot(enum Plot_Type, graph_t*);
 
+path_node_t * graph_run_dijkstra (vertex_t *orig, enum EdgeType edge_type, graph_t * graph_p);
 
 #endif //_GRAPH_H_
