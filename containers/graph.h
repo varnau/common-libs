@@ -1,7 +1,11 @@
 
 /**
- * graph.h
+ * @file graph.h
  *
+ * Generic graph data structure with handling and algorithms functions 
+ *
+ */
+/*
  * Podemos dar la opcion a cambiar el tipo de grafo despues de crearlo,
  * es decir, si se permite el cambio automatico/manual de modo de grafo "si" "no" "depende"
  * 
@@ -25,6 +29,7 @@
 #include "array_list.h"
 #include "containers.h"
 #include "khash.h"
+#include "heap.h"
 
 KHASH_MAP_INIT_STR(gr,int)
 KHASH_MAP_INIT_INT(ii,int)
@@ -73,24 +78,30 @@ typedef struct path_node
     float distance;
     char visited;
     int father;
+    struct heap_node* hn;
+    int index;
 } path_node_t;
 
 
 #define GRAPH_MAX_NAME_LENGTH 256
 
-///Neigborhood edges direction
+/// Wether an edge allows leaving a vertex, or reaching a vertex.
 enum EdgeDirection {GRAPH_EDGE_IN = 1, GRAPH_EDGE_OUT = 2, GRAPH_EDGE_ALL = 3};
+
+/// Wether an edge has directionality or not.
 enum EdgeType {GRAPH_EDGE_DIRECTED = 1, GRAPH_EDGE_NON_DIRECTED = 2};
 
-///Generation Graph type mask
-#define GRAPH_NON_DIRECTED			0b00000001
-#define GRAPH_DIRECTED				0b00000010
-#define GRAPH_MIXED_DIRECTED		0b00000011
-#define GRAPH_CYCLIC				0b00000000
-#define GRAPH_ACYCLIC				0b00000100
-#define GRAPH_STRICT				0b00001000
-#define GRAPH_NON_NEGATIVE_WEIGHT	0b00010000
-//#define GRAPH_MULTIPLE			0b00010000
+/// Features of the graph, expressed in a mask.
+enum GraphType {
+    GRAPH_NON_DIRECTED			= 0b00000001,
+    GRAPH_DIRECTED				= 0b00000010,
+    GRAPH_MIXED_DIRECTED		= 0b00000011,
+    GRAPH_CYCLIC				= 0b00000000,
+    GRAPH_ACYCLIC				= 0b00000100,
+    GRAPH_STRICT				= 0b00001000,
+    GRAPH_NON_NEGATIVE_WEIGHT	= 0b00010000
+    //GRAPH_MULTIPLE			0b00010000
+};
 
 ///Plot Types
 enum Plot_Type {PLOT_GRADE};
@@ -98,7 +109,7 @@ enum Plot_Type {PLOT_GRADE};
 /**
  * Creation and initialization
  */
-graph_t* graph_new(char mask, int initial_num_vertices, int SYNC_MODE);
+graph_t* graph_new(enum GraphType mask, int initial_num_vertices, int SYNC_MODE);
 
 /**
  * Destruction
@@ -203,9 +214,10 @@ int graph_vertex_grade_v(vertex_t* v, enum EdgeDirection edge_type, graph_t*);
 float graph_vertex_clustering_coefficient_s(char* vertex_name, enum EdgeDirection edge_type, graph_t*);
 float graph_vertex_clustering_coefficient_i(int vertex_id, enum EdgeDirection edge_type, graph_t*);
 float graph_vertex_clustering_coefficient_v(vertex_t* v, enum EdgeDirection edge_type, graph_t*);
-float graph_clustering_coefficient(enum EdgeDirection edge_type, graph_t*);
+float graph_clustering_coefficient(enum EdgeDirection edge_type, graph_t*);     //FIXME
 
-void graph_plot(enum Plot_Type, graph_t*);
+
+void graph_plot(char* filename, enum Plot_Type, graph_t*);
 
 path_node_t * graph_run_dijkstra (vertex_t *orig, enum EdgeType edge_type, graph_t * graph_p);
 
