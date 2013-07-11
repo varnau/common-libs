@@ -1,9 +1,7 @@
 #include "graph.h"
 
 
-/**
- * Creation and initialization
- */
+/***********************    Creation and initialization    ****************************/
 graph_t* graph_new(enum GraphType mask, int initial_num_vertices, int SYNC_MODE)
 {
     graph_t *g = (graph_t*)malloc(sizeof(graph_t));
@@ -32,9 +30,7 @@ graph_t* graph_new(enum GraphType mask, int initial_num_vertices, int SYNC_MODE)
     return g;
     
 }
-/**
- * Destruction
- */
+/***********************    Destruction    ****************************/
 
 int graph_free(void (*vertex_data_callback) (void* vertex_data), void (*edge_data_callback) (void* edge_data), graph_t* graph_p)
 {
@@ -130,9 +126,7 @@ int graph_clear(void (*vertex_data_callback) (void* vertex_data), void (*edge_da
 
 }
 
-/**
- * Vertex Functions
- */
+/***********************    Vertex Functions    ****************************/
  
 
 int graph_find_vertex(char* name, graph_t* graph_p){
@@ -146,14 +140,9 @@ int graph_find_vertex(char* name, graph_t* graph_p){
         return kh_value(graph_p->dict, k);
 }
 
-vertex_t* graph_get_vertex_s(char* vertex_name, graph_t * graph_p)
+inline vertex_t* graph_get_vertex_s(char* vertex_name, graph_t * graph_p)
 {
-    assert(graph_p);
-    int id = graph_find_vertex(vertex_name, graph_p);
-    if(id < 0)
-        return NULL;
-    else
-        return graph_get_vertex_i(id, graph_p);
+    return graph_get_vertex_i (graph_find_vertex (vertex_name, graph_p), graph_p);
 }
 vertex_t* graph_get_vertex_i(int vertex_id, graph_t * graph_p)
 {
@@ -173,17 +162,11 @@ vertex_t* graph_get_vertex_i(int vertex_id, graph_t * graph_p)
 int graph_exists_vertex_s(char* name, graph_t* graph_p)
 {
     int id = graph_find_vertex(name, graph_p);
-    if(id >= 0)
-    {
-        return graph_exists_vertex_i(id, graph_p);
-    }
-    else
-        return -1;
+    return graph_exists_vertex_i(id, graph_p);
 }
 
 int graph_exists_vertex_i(int id, graph_t* graph_p)
 {
-    assert(graph_p);
     if( graph_get_vertex_i(id, graph_p) != NULL)
         return 0;
     else
@@ -201,7 +184,7 @@ int graph_reachable_vertex(int src, int dst, graph_t* graph_p){
     edge_t *e;
     linked_list_iterator_t *iter = (linked_list_iterator_t*)malloc(sizeof(linked_list_iterator_t));
     int i, fin = 0, dst_id;
-    char *c = (char*)calloc(graph_p->num_vertices, sizeof(char));
+    char *c = (char*)calloc(graph_p->num_vertices, sizeof(char));   // already visted or not yet
 
     v = graph_get_vertex_i(src, graph_p);
     v_dst = graph_get_vertex_i(dst, graph_p);
@@ -252,7 +235,7 @@ int graph_reachable_vertex(int src, int dst, graph_t* graph_p){
 
 
 
-linked_list_t* graph_get_neighborhood_v(vertex_t* vertex_p, enum EdgeDirection edge_type, int k, graph_t* graph_p)
+linked_list_t* graph_get_vertex_neighborhood_v(vertex_t* vertex_p, enum EdgeDirection edge_type, int k, graph_t* graph_p)
 {
     assert(graph_p);
     if(vertex_p == NULL)
@@ -357,26 +340,26 @@ linked_list_t* graph_get_neighborhood_v(vertex_t* vertex_p, enum EdgeDirection e
     
     return queue;
 }
-linked_list_t* graph_get_neighborhood_s(char* name, enum EdgeDirection edge_type, int k_jumps, graph_t* graph_p)
+inline linked_list_t* graph_get_vertex_neighborhood_s(char* name, enum EdgeDirection edge_type, int k_jumps, graph_t* graph_p)
 {
-    return graph_get_neighborhood_v(graph_get_vertex_s(name, graph_p), edge_type, k_jumps, graph_p);
+    return graph_get_vertex_neighborhood_v(graph_get_vertex_s(name, graph_p), edge_type, k_jumps, graph_p);
 }
-linked_list_t* graph_get_neighborhood_i(int vertex_id, enum EdgeDirection edge_type, int k_jumps, graph_t* graph_p)
+inline linked_list_t* graph_get_vertex_neighborhood_i(int vertex_id, enum EdgeDirection edge_type, int k_jumps, graph_t* graph_p)
 {
-    return graph_get_neighborhood_v(graph_get_vertex_i(vertex_id, graph_p), edge_type, k_jumps, graph_p);
+    return graph_get_vertex_neighborhood_v(graph_get_vertex_i(vertex_id, graph_p), edge_type, k_jumps, graph_p);
 }
 
-linked_list_t* graph_get_adjacents_v(vertex_t* vertex_p, graph_t* graph_p)
+inline linked_list_t* graph_get_vertex_adjacents_v(vertex_t* vertex_p, graph_t* graph_p)
 {
-    return graph_get_neighborhood_v(vertex_p, GRAPH_EDGE_OUT, 1, graph_p);
+    return graph_get_vertex_neighborhood_v(vertex_p, GRAPH_EDGE_OUT, 1, graph_p);
 }
-linked_list_t* graph_get_adjacents_s(char* name, graph_t* graph_p)
+inline linked_list_t* graph_get_vertex_adjacents_s(char* name, graph_t* graph_p)
 {
-    return graph_get_neighborhood_v(graph_get_vertex_s(name, graph_p), GRAPH_EDGE_OUT, 1, graph_p);
+    return graph_get_vertex_neighborhood_v(graph_get_vertex_s(name, graph_p), GRAPH_EDGE_OUT, 1, graph_p);
 }
-linked_list_t* graph_get_adjacents_i(int id, graph_t* graph_p)
+inline linked_list_t* graph_get_vertex_adjacents_i(int id, graph_t* graph_p)
 {
-    return graph_get_neighborhood_v(graph_get_vertex_i(id, graph_p), GRAPH_EDGE_OUT, 1, graph_p);
+    return graph_get_vertex_neighborhood_v(graph_get_vertex_i(id, graph_p), GRAPH_EDGE_OUT, 1, graph_p);
 }
 
 /*!
@@ -389,6 +372,7 @@ linked_list_t* graph_get_adjacents_i(int id, graph_t* graph_p)
  */
 int graph_add_vertex(char* name_p, void* vertex_data, graph_t* graph_p){
     
+    assert(graph_p);
     vertex_t *v;
     
     if (name_p == NULL)
@@ -446,7 +430,7 @@ int graph_add_vertex(char* name_p, void* vertex_data, graph_t* graph_p){
  * @return	0	OK
  * 			-1	Not existing vertex
  */
-int graph_remove_vertex_s(char* vertex_name, void (*vertex_data_callback) (void* vertex_data),void (*edge_data_callback) (void* edge_data), graph_t* graph_p)
+inline int graph_remove_vertex_s(char* vertex_name, void (*vertex_data_callback) (void* vertex_data),void (*edge_data_callback) (void* edge_data), graph_t* graph_p)
 {
     int vertex_id = graph_find_vertex(vertex_name,graph_p);
     return graph_remove_vertex_i(vertex_id, vertex_data_callback, edge_data_callback, graph_p);
@@ -505,9 +489,7 @@ int graph_remove_vertex_i(int vertex_id, void (*vertex_data_callback) (void* ver
     return 0;
 }
 
-/**
- * Edge Functions
- */
+/***********************    Edge Functions    ****************************/
 
 
 
@@ -559,17 +541,16 @@ void graph_aleale(int num_v, float connectivity, enum EdgeType edge_type, graph_
             }
     printf("Llevamos %i edges puestos\n", i);
 }
-int graph_add_edge_i(int src, int dst, void* edge_data, enum EdgeType edge_type, graph_t* graph_p)
+inline int graph_add_edge_i(int src, int dst, void* edge_data, enum EdgeType edge_type, graph_t* graph_p)
 {
     return graph_add_edge_iw(src, dst, edge_data, edge_type, 1, graph_p);
 }
-int graph_add_edge_s(char* src, char* dst, void* edge_data, enum EdgeType edge_type, graph_t* graph_p)
+inline int graph_add_edge_s(char* src, char* dst, void* edge_data, enum EdgeType edge_type, graph_t* graph_p)
 {
     return graph_add_edge_sw(src, dst, edge_data, edge_type, 1, graph_p);
 }
-int graph_add_edge_sw(char* src, char* dst, void* edge_data, enum EdgeType edge_type, float weight, graph_t* graph_p)
+inline int graph_add_edge_sw(char* src, char* dst, void* edge_data, enum EdgeType edge_type, float weight, graph_t* graph_p)
 {
-    assert(graph_p);
     int s = graph_find_vertex(src,graph_p);
     int d = graph_find_vertex(dst,graph_p);
     return graph_add_edge_iw(s, d, edge_data, edge_type, weight, graph_p);
@@ -584,13 +565,12 @@ int graph_add_edge_sw(char* src, char* dst, void* edge_data, enum EdgeType edge_
  * 			-3   : edge_type non compatible with the graph directed type
  * 			-4   : edge breaks acyclity
  * 			-5   : edge breaks multiplicity
- * 			-6   : Weight must be possitive
+ * 			-6   : Weight must be positive
  */
 int graph_add_edge_iw(int src, int dst, void* edge_data, enum EdgeType edge_type, float weight, graph_t* graph_p){
     
-    //if(array_list_size(graph_p->vertices) <= src || array_list_size(graph_p->vertices) <= dst || src < 0 || dst < 0)
-    //	return -1;
-    if (graph_get_vertex_i(src, graph_p) == NULL || graph_get_vertex_i(src, graph_p) == NULL)
+    assert(graph_p);
+    if (graph_get_vertex_i(src, graph_p) == NULL || graph_get_vertex_i(dst, graph_p) == NULL)
         return -1;
     
     
@@ -618,24 +598,18 @@ int graph_add_edge_iw(int src, int dst, void* edge_data, enum EdgeType edge_type
 
 
 
-edge_t* graph_get_edge_s(char* src, char* dst, enum EdgeType edge_type, graph_t* graph_p)
+inline edge_t* graph_get_edge_s(char* src, char* dst, enum EdgeType edge_type, graph_t* graph_p)
 {
     vertex_t* v_src = graph_get_vertex_s (src, graph_p);
     vertex_t* v_dst = graph_get_vertex_s (dst, graph_p);
-    if (v_src == NULL || v_dst == NULL)
-        return NULL;
-    else
-        return graph_get_edge_v (v_src, v_dst, edge_type, graph_p);
+    return graph_get_edge_v (v_src, v_dst, edge_type, graph_p);
 }
 
-edge_t* graph_get_edge_i(int src, int dst, enum EdgeType edge_type, graph_t* graph_p)
+inline edge_t* graph_get_edge_i(int src, int dst, enum EdgeType edge_type, graph_t* graph_p)
 {
     vertex_t* v_src = graph_get_vertex_i (src, graph_p);
     vertex_t* v_dst = graph_get_vertex_i (dst, graph_p);
-    if (v_src == NULL || v_dst == NULL)
-        return NULL;
-    else
-        return graph_get_edge_v (v_src, v_dst, edge_type, graph_p);
+    return graph_get_edge_v (v_src, v_dst, edge_type, graph_p);
 }
 
 edge_t* graph_get_edge_v(vertex_t* v_src, vertex_t* v_dst, enum EdgeType edge_type, graph_t* graph_p)
@@ -734,22 +708,15 @@ edge_t* graph_get_edge_v(vertex_t* v_src, vertex_t* v_dst, enum EdgeType edge_ty
  * 			-1	Edge doesn't exist
  * 			-2	Corrupted edge
  */
-int graph_remove_edge_s(char* src, char* dst, enum EdgeType edge_type, void (*edge_data_callback) (void* edge_data), graph_t* graph_p)
+inline int graph_remove_edge_s(char* src, char* dst, enum EdgeType edge_type, void (*edge_data_callback) (void* edge_data), graph_t* graph_p)
 {
     edge_t* e = graph_get_edge_s( src, dst, edge_type, graph_p);
-    if(e!=NULL)
-        return graph_remove_edge_e(e,edge_type, edge_data_callback, graph_p);
-    else
-        return -1;
+    return graph_remove_edge_e(e,edge_type, edge_data_callback, graph_p);
 }
-int graph_remove_edge_i(int src, int dst, enum EdgeType edge_type, void (*edge_data_callback) (void* edge_data), graph_t* graph_p)
+inline int graph_remove_edge_i(int src, int dst, enum EdgeType edge_type, void (*edge_data_callback) (void* edge_data), graph_t* graph_p)
 {
     edge_t *e = graph_get_edge_i( src, dst, edge_type, graph_p);
-    
-    if(e!=NULL)
-        return graph_remove_edge_e(e,edge_type, edge_data_callback, graph_p);
-    else
-        return -1;
+    return graph_remove_edge_e(e,edge_type, edge_data_callback, graph_p);
 }
 int graph_remove_edge_e(edge_t *edge_p, enum EdgeType edge_type, void (*edge_data_callback) (void* edge_data), graph_t* graph_p)
 {
@@ -782,9 +749,7 @@ int graph_remove_edge_e(edge_t *edge_p, enum EdgeType edge_type, void (*edge_dat
 
 
 
-/**
- * Others
- */
+/***********************    Others    ****************************/
 
 void graph_print(graph_t* graph_p)
 {
@@ -915,57 +880,45 @@ void __graph_print_dot(char* file_name, int print_weight, graph_t* graph_p)
     if(graph_p->num_vertices)
         linked_list_iterator_free(iter);
 }
-void graph_print_dot(char* file_name, graph_t* graph_p)
+inline void graph_print_dot(char* file_name, graph_t* graph_p)
 {
     __graph_print_dot(file_name, 0, graph_p);
 }
 
-void graph_print_dot_w(char* file_name, graph_t* graph_p)
+inline void graph_print_dot_w(char* file_name, graph_t* graph_p)
 {
     __graph_print_dot(file_name, 1, graph_p);
 }
 
 
-int graph_get_order (graph_t* graph_p)
+inline int graph_get_order (graph_t* graph_p)
 {
     assert(graph_p);
     return graph_p->num_vertices - linked_list_size(graph_p->removed_vertices);
 }
-int graph_get_size (graph_t* graph_p)
+inline int graph_get_size (graph_t* graph_p)
 {
     assert(graph_p);
     return graph_p->num_edges;
 }
 
-/**
- * Profiling
- */
+/***********************    Profiling    ****************************/
 
-int graph_vertex_grade_s(char* vertex_name, enum EdgeDirection edge_type, graph_t* graph_p)
+inline int graph_get_vertex_grade_s(char* vertex_name, enum EdgeDirection edge_type, graph_t* graph_p)
 {
-    vertex_t* v = graph_get_vertex_s (vertex_name, graph_p);
-    
-    if (v == NULL)
-        return 0;
-    else
-        return graph_vertex_grade_v (v, edge_type, graph_p);
+    return graph_get_vertex_grade_v (graph_get_vertex_s (vertex_name, graph_p), edge_type, graph_p);
 }
 
-int graph_vertex_grade_i(int vertex_id, enum EdgeDirection edge_type, graph_t* graph_p)
+inline int graph_get_vertex_grade_i(int vertex_id, enum EdgeDirection edge_type, graph_t* graph_p)
 {
-    vertex_t* v = graph_get_vertex_i (vertex_id, graph_p);
-    
-    if (v == NULL)
-        return 0;
-    else
-        return graph_vertex_grade_v (v, edge_type, graph_p);
+    return graph_get_vertex_grade_v (graph_get_vertex_i (vertex_id, graph_p), edge_type, graph_p);
 }
 
-int graph_vertex_grade_v(vertex_t * v, enum EdgeDirection edge_type, graph_t* graph_p)
+int graph_get_vertex_grade_v(vertex_t * v, enum EdgeDirection edge_type, graph_t* graph_p)
 {
     assert(graph_p);
     if (v == NULL)
-        return 0;
+        return -1;
     
     int n_edges;
 
@@ -980,28 +933,23 @@ int graph_vertex_grade_v(vertex_t * v, enum EdgeDirection edge_type, graph_t* gr
     return n_edges;
 }
 
-/**
- * Computes the cluster coefficient of a vertex.
- * This value is the connectivity among its neighbors divided by the 
- * maximum possible connectivity among its neighbors
- */
-float graph_vertex_clustering_coefficient_s (char* vertex_name, enum EdgeDirection edge_type, graph_t* graph_p)
+inline float graph_get_vertex_clustering_coefficient_s (char* vertex_name, enum EdgeType edge_type, graph_t* graph_p)
 {
-    return graph_vertex_clustering_coefficient_v (graph_get_vertex_s (vertex_name, graph_p), edge_type, graph_p);
+    return graph_get_vertex_clustering_coefficient_v (graph_get_vertex_s (vertex_name, graph_p), edge_type, graph_p);
 }
 
-float graph_vertex_clustering_coefficient_i (int vertex_id, enum EdgeDirection edge_type, graph_t* graph_p)
+inline float graph_get_vertex_clustering_coefficient_i (int vertex_id, enum EdgeType edge_type, graph_t* graph_p)
 {
-    return graph_vertex_clustering_coefficient_v (graph_get_vertex_i (vertex_id, graph_p), edge_type, graph_p);
+    return graph_get_vertex_clustering_coefficient_v (graph_get_vertex_i (vertex_id, graph_p), edge_type, graph_p);
 }
 
-float graph_vertex_clustering_coefficient_v (vertex_t* v, enum EdgeDirection edge_type, graph_t* graph_p)
+float graph_get_vertex_clustering_coefficient_v (vertex_t* v, enum EdgeType edge_type, graph_t* graph_p)
 {
     assert(graph_p);
     if (v == NULL)
         return -1;
     
-    linked_list_t * l = graph_get_neighborhood_v (v, edge_type, 1, graph_p);
+    linked_list_t * l = graph_get_vertex_neighborhood_v (v, edge_type, 1, graph_p);
     int num_adjacent = linked_list_size (l);
     int max_edges = (num_adjacent * (num_adjacent-1)/* / 2*/);
     int curr_edges = 0;
@@ -1042,19 +990,15 @@ float graph_vertex_clustering_coefficient_v (vertex_t* v, enum EdgeDirection edg
     return (curr_edges/(float)max_edges);
 }
 
-/**
- * Computes the average clustering coefficient of the graph.
- * This value is the summation of the clustering coefficient of all vertices
- * divided by the quantity of vertices.
- */
-float graph_clustering_coefficient (enum EdgeDirection edge_type, graph_t* graph_p)
+
+float graph_get_clustering_coefficient (enum EdgeType edge_type, graph_t* graph_p)
 {
     assert(graph_p);
     float cc = 0;
     int num_adjacent, i;
 
     for (i = 0; i < graph_p->num_vertices; i++)
-        cc += graph_vertex_clustering_coefficient_i(i, edge_type, graph_p);
+        cc += graph_get_vertex_clustering_coefficient_i(i, edge_type, graph_p);
     
     cc /= graph_p->num_vertices;
 
@@ -1080,7 +1024,7 @@ void graph_plot(char* filename, enum Plot_Type plot_type, graph_t* graph_p)
             int *vec = calloc(tam,sizeof(int));
             for(int i = 0; i < graph_p->num_vertices; i++)
             {
-                aux = graph_vertex_grade_i(i, GRAPH_EDGE_OUT, graph_p);
+                aux = graph_get_vertex_grade_i(i, GRAPH_EDGE_OUT, graph_p);
                 if(aux > tam)
                 {
                     vec = realloc(vec, sizeof(int)*tam*2);
