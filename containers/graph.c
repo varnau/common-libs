@@ -4,7 +4,7 @@
 /**
  * Creation and initialization
  */
-graph_t* graph_new(char mask, int initial_num_vertices, int SYNC_MODE)
+graph_t* graph_new(enum GraphType mask, int initial_num_vertices, int SYNC_MODE)
 {
     graph_t *g = (graph_t*)malloc(sizeof(graph_t));
     
@@ -509,6 +509,56 @@ int graph_remove_vertex_i(int vertex_id, void (*vertex_data_callback) (void* ver
  * Edge Functions
  */
 
+
+
+int __graph_add_edge(int src, int dst, void* edge_data, enum EdgeType edge_type, float weight, graph_t* graph_p){
+    edge_t * e = (edge_t*)malloc(sizeof(edge_t));
+    e->src_id = src;
+    e->dst_id = dst;
+    e->data = edge_data;
+    e->weight = weight;
+    
+    switch(edge_type)// TODO comprobacion multiple...
+    {
+        case GRAPH_EDGE_DIRECTED:
+            if(graph_p->directed == GRAPH_NON_DIRECTED && graph_p->strict == GRAPH_STRICT){
+                free(e);
+                return -3;
+            }
+
+            linked_list_insert(e,(graph_get_vertex_i(src,graph_p))->dst);
+            linked_list_insert(e,(graph_get_vertex_i(dst,graph_p))->src);
+            break;
+        case GRAPH_EDGE_NON_DIRECTED:
+            if(graph_p->directed == GRAPH_DIRECTED && graph_p->strict == GRAPH_STRICT){
+                free(e);
+                return -3;
+            }
+            linked_list_insert(e,(graph_get_vertex_i(src,graph_p))->nd);
+            linked_list_insert(e,(graph_get_vertex_i(dst,graph_p))->nd);
+
+            break;
+        default:
+            free(e);
+            return -2;
+    }
+    graph_p->num_edges++;
+    return 0;
+
+}
+void graph_aleale(int num_v, float connectivity, enum EdgeType edge_type, graph_t* g)
+{
+    int i = 0;
+    for(int s = 0; s < num_v; s++)
+        for(int d = 0; d < num_v; d++)
+            if(rand()/(1.0*RAND_MAX) <= connectivity){
+                __graph_add_edge(s,d,NULL,edge_type,rand()%40+1,g);
+                i++;
+                if(!(i % 100000))
+                    printf("Llevamos %i edges puestos\n", i);
+            }
+    printf("Llevamos %i edges puestos\n", i);
+}
 int graph_add_edge_i(int src, int dst, void* edge_data, enum EdgeType edge_type, graph_t* graph_p)
 {
     return graph_add_edge_iw(src, dst, edge_data, edge_type, 1, graph_p);
@@ -544,7 +594,6 @@ int graph_add_edge_iw(int src, int dst, void* edge_data, enum EdgeType edge_type
         return -1;
     
     
-    edge_t * e;
     
     //if(!graph_p->multiple)
         if(graph_get_edge_i(src,dst,edge_type, graph_p) != NULL)
@@ -563,40 +612,8 @@ int graph_add_edge_iw(int src, int dst, void* edge_data, enum EdgeType edge_type
 
     //if(graph_exists_vertex_i(src, graph_p) < 0 || graph_exists_vertex_i(dst, graph_p) < 0 )
     //	return -6;
+    return __graph_add_edge(src,dst,edge_data,edge_type,weight,graph_p);
     
-    e = (edge_t*)malloc(sizeof(edge_t));
-    e->src_id = src;
-    e->dst_id = dst;
-    e->data = edge_data;
-    e->weight = weight;
-    
-    switch(edge_type)// TODO comprobacion multiple...
-    {
-        case GRAPH_EDGE_DIRECTED:
-            if(graph_p->directed == GRAPH_NON_DIRECTED && graph_p->strict == GRAPH_STRICT){
-                free(e);
-                return -3;
-            }
-
-            linked_list_insert(e,(graph_get_vertex_i(src,graph_p))->dst);
-            linked_list_insert(e,(graph_get_vertex_i(dst,graph_p))->src);
-            break;
-        case GRAPH_EDGE_NON_DIRECTED:
-            if(graph_p->directed == GRAPH_DIRECTED && graph_p->strict == GRAPH_STRICT){
-                free(e);
-                return -3;
-            }
-            linked_list_insert(e,(graph_get_vertex_i(src,graph_p))->nd);
-            linked_list_insert(e,(graph_get_vertex_i(dst,graph_p))->nd);
-
-            break;
-        default:
-            free(e);
-            return -2;
-    }
-    graph_p->num_edges++;
-    return 0;
-
 }
 
 
@@ -750,7 +767,7 @@ int graph_remove_edge_e(edge_t *edge_p, enum EdgeType edge_type, void (*edge_dat
         linked_list_remove(edge_p, v_src->dst);
         linked_list_remove(edge_p, v_dst->src);
     }
-    else if(edge_type & GRAPH_EDGE_NON_DIRECTED)
+    if(edge_type & GRAPH_EDGE_NON_DIRECTED)
     {
         linked_list_remove(edge_p, v_src->nd);
         linked_list_remove(edge_p, v_dst->nd);
@@ -1022,7 +1039,7 @@ float graph_vertex_clustering_coefficient_v (vertex_t* v, enum EdgeDirection edg
     linked_list_iterator_free(iter1);
     linked_list_iterator_free(iter2);
     linked_list_free (l, NULL);
-    return (curr_edges/((float)max_edges*2));
+    return (curr_edges/(float)max_edges);
 }
 
 /**
@@ -1080,7 +1097,7 @@ void graph_plot(char* filename, enum Plot_Type plot_type, graph_t* graph_p)
             }
             fprintf(f, "e\n");
             
-        }        
+        }
             break;
         default:
             
@@ -1089,4 +1106,131 @@ void graph_plot(char* filename, enum Plot_Type plot_type, graph_t* graph_p)
     }
     
     fclose(f);
+}
+
+int __dijkstra_compare_node(struct heap_node* n1,struct heap_node* n2)
+{
+    return ((path_node_t*)(n1->value))->distance < ((path_node_t*)(n2->value))->distance;
+}
+
+path_node_t * graph_run_dijkstra (vertex_t *orig, enum EdgeType edge_type, graph_t * graph_p)
+{
+    assert(graph_p->non_negative);
+
+    path_node_t * dists = (path_node_t*) calloc (graph_p->num_vertices, sizeof(path_node_t));   // distances table
+    linked_list_t * unvisited = linked_list_new (COLLECTION_MODE_ASYNCHRONIZED);    // unvisited queue
+    //linked_list_iterator_t *iter = linked_list_iterator_new(unvisited); // unvisited iterator
+    linked_list_iterator_t *iter_edge = linked_list_iterator_new(unvisited);    // edge iterator within a vertex
+    struct heap *h = malloc(sizeof(struct heap));
+    struct heap_node *hn;
+    int directed_path = edge_type & GRAPH_EDGE_DIRECTED;
+    int non_directed_path = edge_type & GRAPH_EDGE_NON_DIRECTED;
+    vertex_t *v;
+    edge_t * e;
+    
+    float dist_aux;
+    int i;
+    for (i = 0; i < graph_p->num_vertices; i++)
+    {
+        dists[i].distance = 1000;//FLT_MAX;
+        dists[i].father = -1;
+        dists[i].visited = 0;
+        dists[i].hn = NULL;
+        dists[i].index = i;
+    }
+
+    dists[orig->id].distance = 0;
+    dists[orig->id].father = orig->id;
+    dists[orig->id].visited = 1;
+    
+    heap_init(h);
+
+    v = orig;
+    //printf("ascomensando %p\n",v);
+    while (1)
+    {
+        dists[v->id].visited = 10;
+        if(directed_path)
+        {
+            linked_list_iterator_init(v->dst, iter_edge);
+            e = linked_list_iterator_curr(iter_edge);
+            while(e != NULL)
+            {
+                dist_aux = dists[v->id].distance + e->weight;
+                //printf("e->dst_id vale: %d\n", e->dst_id);
+                if (dists[e->dst_id].visited == 0)
+                {
+                    //linked_list_insert_last( array_list_get(e->dst_id, graph_p->vertices), unvisited); 	//inserts in the unvisited queue
+                    hn = malloc(sizeof(struct heap_node));
+                    heap_node_init(hn, &dists[e->dst_id]);
+                    //hn->value = &dists[e->dst_id];
+                    
+                    dists[e->dst_id].father = v->id;
+                    dists[e->dst_id].distance = dist_aux;
+                    dists[e->dst_id].hn = hn;
+                    
+                    dists[e->dst_id].visited = 1;
+                    heap_insert(__dijkstra_compare_node,h,hn);
+                    
+                }else if (dists[e->dst_id].distance > dist_aux)   // better path found
+                {
+                    dists[e->dst_id].distance = dist_aux;
+                    dists[e->dst_id].father = v->id;
+                    heap_decrease(__dijkstra_compare_node, h,dists[e->dst_id].hn); 
+                }
+                e = (edge_t*)linked_list_iterator_next(iter_edge);
+            }
+        }
+        printf("\n");
+        
+        printf("ID\t\tDist\t\tFather\t visited --------- v->name %s\n", v->name);
+        for (i = 0; i < graph_p->num_vertices; i++)
+        {
+            printf("%s\t\t%.0f\t\t%d\t%d\n", ((vertex_t*) (graph_p->vertices->items[i]))->name , dists[i].distance, dists[i].father, dists[i].visited);
+        }printf("\n\n");
+        
+        
+        //if(non_directed_path)
+        //{
+            //linked_list_iterator_init(v->dst, iter_edge);
+            //e = linked_list_iterator_curr(iter_edge);
+            //while(e != NULL)
+            //{
+                //dist_aux = dists[v->id].distance + e->weight;
+                //printf("e->dst_id vale: %d\n", e->dst_id);
+                //if (dists[e->dst_id].visited == 0)
+                //{
+                    //linked_list_insert_last( array_list_get(e->dst_id, graph_p->vertices), unvisited); 	//inserts in the unvisited queue
+                    
+                    //dists[e->dst_id].visited = 1;
+                    //dists[e->dst_id].father = v->id;
+                    //dists[e->dst_id].distance = dist_aux;
+                //}else if (dists[e->dst_id].distance > dist_aux)   // better path found
+                //{
+                    //dists[e->dst_id].distance = dist_aux;
+                    //dists[e->dst_id].father = v->id;
+                //}
+                //e = (edge_t*)linked_list_iterator_next(iter_edge);
+            //}
+           
+        //}
+         
+        //v = linked_list_remove_first(unvisited);    //POP
+        
+        hn = heap_take(__dijkstra_compare_node, h);
+        
+        if(hn)
+        {
+            v = array_list_get(((path_node_t*)(hn->value))->index, graph_p->vertices);
+            //heap_delete(__dijkstra_compare_node, h, hn);
+        }
+        else
+            break;
+        //linked_list_iterator_first(iter);
+        //printf("Sacamos el vertice %d\n",v?v->id:-1);
+    }
+    //linked_list_iterator_free(iter);
+    linked_list_iterator_free(iter_edge);
+    linked_list_free(unvisited, NULL);
+    return dists;
 }

@@ -16,13 +16,13 @@ void stop_crono(char* mensaje, struct timespec * ini_time)
 	}
 	printf(mensaje, (int)timedif.tv_sec, timedif.tv_nsec);
 }
-
+void graph_aleale(int num_v, float connectivity, enum EdgeType edge_type, graph_t* g);
 int main (void)
 {
 	struct timespec ini_time;
 	
 	graph_t *g;
-	int num_vertices = 1000000;
+	int num_vertices = 10;
 	int num_edges = 20000000;
 	int name_length = 255;
 	char ** names;
@@ -44,7 +44,7 @@ int main (void)
 	
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ini_time);//+++++++++++++++++++++++++++++++++++
 	
-	g = graph_new (GRAPH_CYCLIC | GRAPH_DIRECTED, num_vertices, COLLECTION_MODE_ASYNCHRONIZED);
+	g = graph_new (GRAPH_NON_NEGATIVE_WEIGHT | GRAPH_CYCLIC | GRAPH_DIRECTED, num_vertices, COLLECTION_MODE_ASYNCHRONIZED);
 	
 	stop_crono("tiempo en crear el grafo: t =  %d s y %ld ns\n", &ini_time);//-----------------------
 	
@@ -57,19 +57,30 @@ int main (void)
 	
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ini_time);//+++++++++++++++++++++++++++++++++
 	
-	for (i = 0; i < num_edges; i++)
-		graph_add_edge_iw(rand()%num_vertices, rand()%num_vertices, NULL, GRAPH_EDGE_DIRECTED, 1, g);
+	//for (i = 0; i < num_edges; i++)
+		//graph_add_edge_iw(rand()%num_vertices, rand()%num_vertices, NULL, GRAPH_EDGE_DIRECTED, 1, g);
 	
+    float p = (1.0*num_edges)/(num_vertices*num_vertices);
+    p = 0.8;
+    printf("%f\n",p);
+    graph_aleale(num_vertices, p, GRAPH_EDGE_DIRECTED, g);
+    
 	stop_crono("tiempo en relenar edges aleatorios =  %d s y %ld ns\n", &ini_time);//-----------------
 	
 	printf("solo cumplian las condiciones %d edges\n", g->num_edges);
 	
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ini_time);//+++++++++++++++++++++++++++++++++++
 	
-	//graph_print_dot("grafo_tiempo.gv", g);
+	graph_print_dot_w("grafo_tiempo.gv", g);
     graph_plot("grade_tiempo.plt",PLOT_GRADE, g);
 
 	stop_crono("tiempo en print dot: t =  %d s y %ld ns\n", &ini_time);//-----------------------
+	
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ini_time);//+++++++++++++++++++++++++++++++++++
+	
+	graph_run_dijkstra((vertex_t*)(g->vertices->items[0]), GRAPH_EDGE_DIRECTED, g);
+
+	stop_crono("tiempo en Dijkstra: t =  %d s y %ld ns\n", &ini_time);//-----------------------
 	
 	
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ini_time);//+++++++++++++++++++++++++++++++++++
