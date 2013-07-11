@@ -116,18 +116,18 @@ START_TEST(test_cc_grade)
     graph_print_dot("check_graph_cc.gv", g);
     graph_print(g);
 
-    ret = graph_vertex_grade_s("A", GRAPH_EDGE_OUT, g);
+    ret = graph_get_vertex_grade_s("A", GRAPH_EDGE_OUT, g);
     fail_if(ret != 3, "grade(A): should be 3, but ret=%d", ret);
 
-    ret = graph_vertex_grade_s("C", GRAPH_EDGE_IN, g);
+    ret = graph_get_vertex_grade_s("C", GRAPH_EDGE_IN, g);
     fail_if(ret != 3, "grade_in(A): should be 3, but ret=%d", ret);
-    ret = graph_vertex_grade_s("C", GRAPH_EDGE_OUT, g);
+    ret = graph_get_vertex_grade_s("C", GRAPH_EDGE_OUT, g);
     fail_if(ret != 3, "grade_out(A): should be 3, but ret=%d", ret);
-    ret = graph_vertex_grade_s("C", GRAPH_EDGE_ALL, g);
+    ret = graph_get_vertex_grade_s("C", GRAPH_EDGE_ALL, g);
     fail_if(ret != 4, "grade_all(A): should be 4, but ret=%d", ret);
 
 
-    cc = graph_vertex_clustering_coefficient_s ("A", GRAPH_EDGE_OUT, g);
+    cc = graph_get_vertex_clustering_coefficient_s ("A", GRAPH_EDGE_OUT, g);
     fail_if(cc != 0.5, "clustering_coefficient(A): should be 0.5, but cc=%f", cc);
 }
 END_TEST
@@ -193,7 +193,7 @@ START_TEST(test_neighbor_k_level) {
     ge(5,7);
     ge(7,4);
 
-    linked_list_t *l = graph_get_neighborhood_i(0,GRAPH_EDGE_ALL, 3, g);
+    linked_list_t *l = graph_get_vertex_neighborhood_i(0,GRAPH_EDGE_ALL, 3, g);
     linked_list_print(l, print_v);
 
     graph_print_dot("graph_nh.gv",g);

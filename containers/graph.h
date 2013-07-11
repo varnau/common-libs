@@ -2,8 +2,12 @@
 /**
  * @file graph.h
  *
- * Generic graph data structure with handling and algorithms functions 
+ * Generic graph data structure with handling and algorithms functions.
  *
+ * In some functions you can choose how to identificate a vertex.@n
+ * _s: char * name  @n
+ * _i: int id  @n
+ * _v: vertex_t * pointer  @n
  */
 /*
  * Podemos dar la opcion a cambiar el tipo de grafo despues de crearlo,
@@ -17,6 +21,7 @@
  * 		Darle coherencia
  * 		Correcto sincronismo (sync_mode)
  * 		doc
+ * 		eliminar comprobaciones redundantes
  * 
  * DUDAS:
  */
@@ -117,22 +122,26 @@ enum GraphType {
 ///Plot Types
 enum Plot_Type {PLOT_GRADE, PLOT_BETWEENNESS, PLOT_JUMPS};
 
+/***********************    Creation and initialization    ****************************/
 /**
- * Creation and initialization
+ * @param mask Type of the graph. You can specify several features by |'ing them e.g.
+ * graph_new (GRAPH_NON_DIRECTED | GRAPH_ACYCLIC | GRAPH_NON_NEGATIVE_WEIGHT, ...
+ *
+ * @param initial_num_vertices First estimation of how many vertices the graph will have.
+ * A good estimation will result in fewer reallocs. Note that the graph is always created empty, this 
+ * parameter doesn't add random vertices.
+ *
+ * @param SYNC_MODE Wether the graph must use mutex or not.
  */
 graph_t* graph_new(enum GraphType mask, int initial_num_vertices, int SYNC_MODE);
 
-/**
- * Destruction
- */
+/***********************    Destruction    ****************************/
 
 int graph_free(void (*vertex_data_callback) (void* vertex_data), void (*edge_data_callback) (void* edge_data), graph_t*);
 
 int graph_clear(void (*vertex_data_callback) (void* vertex_data), void (*edge_data_callback) (void* edge_data), graph_t*);
 
-/**
- * Vertex Functions
- */
+/***********************    Vertex Functions    ****************************/
 int graph_add_vertex(char* name, void* vertex_data, graph_t*);
 
 int graph_find_vertex(char* name, graph_t*);	// assumes only one ocurrence
@@ -150,42 +159,29 @@ void* graph_get_vertex_data_s(char* name, graph_t*);
 void* graph_get_vertex_data_i(int id, graph_t*);
 
 
+/**
+ * Returns a linked_list with all the vertices reachables in k_jumps or less from a given vertex.
+ *
+ * @param edge_type Wether you want to list vertices reachables (childs or destinations), or vertices with
+ * reverse direction (fathers or sources).
+ */
+linked_list_t* graph_get_vertex_neighborhood_v(vertex_t* vertex_p, enum EdgeDirection edge_type, int k_jumps, graph_t*);
+linked_list_t* graph_get_vertex_neighborhood_s(char* name, enum EdgeDirection edge_type, int k_jumps, graph_t*);
+linked_list_t* graph_get_vertex_neighborhood_i(int vertex_id, enum EdgeDirection edge_type, int k_jumps, graph_t*);
 
-linked_list_t* graph_get_neighborhood_v(vertex_t* vertex_p, enum EdgeDirection edge_type, int k_jumps, graph_t*);
-linked_list_t* graph_get_neighborhood_s(char* name, enum EdgeDirection edge_type, int k_jumps, graph_t*);
-linked_list_t* graph_get_neighborhood_i(int vertex_id, enum EdgeDirection edge_type, int k_jumps, graph_t*);
+linked_list_t* graph_get_vertex_adjacents_v(vertex_t* vertex_p, graph_t*);
+linked_list_t* graph_get_vertex_adjacents_s(char* name, graph_t*);
+linked_list_t* graph_get_vertex_adjacents_i(int id, graph_t*);
 
-linked_list_t* graph_get_adjacents_v(vertex_t* vertex_p, graph_t*);
-linked_list_t* graph_get_adjacents_s(char* name, graph_t*);
-linked_list_t* graph_get_adjacents_i(int id, graph_t*);
-
-/*
-linked_list_t* graph_vertex_neighborhood_s(char* name, graph_t*);
-linked_list_t* graph_vertex_neighborhood_i(int id, graph_t*);
-
-linked_list_t* graph_vertex_neighborhood_out_s(char* name, graph_t*);
-linked_list_t* graph_vertex_neighborhood_out_i(int id, graph_t*);
-
-linked_list_t* graph_vertex_neighborhood_in_s(char* name, graph_t*);
-linked_list_t* graph_vertex_neighborhood_in_i(int id, graph_t*);
-//adjacent
-
-linked_list_t* graph_vertex_adjacents_s(char* name, graph_t*);
-linked_list_t* graph_vertex_adjacents_i(int id, graph_t*);
-
-linked_list_t* graph_vertex_adjacents_out_s(char* name, graph_t*);
-linked_list_t* graph_vertex_adjacents_out_i(int id, graph_t*);
-
-linked_list_t* graph_vertex_adjacents_in_s(char* name, graph_t*);
-linked_list_t* graph_vertex_adjacents_in_i(int id, graph_t*);
-*/
 
 int graph_remove_vertex_s(char* vertex_name, void (*vertex_data_callback) (void* vertex_data),void (*edge_data_callback) (void* edge_data), graph_t*);
 int graph_remove_vertex_i(int vertex_id, void (*vertex_data_callback) (void* vertex_data),void (*edge_data_callback) (void* edge_data), graph_t*);
 
 
+/***********************    Edge Functions    ****************************/
 /**
- * Edge Functions
+ * If you want an edge to have an explicit weight, use the _w functions. 
+ * Otherwise it will be set to 1
  */
 int graph_add_edge_s(char* src, char* dst, void* edge_data, enum EdgeType edge_type, graph_t*);
 int graph_add_edge_i(int src, int dst, void* edge_data, enum EdgeType edge_type, graph_t*);
@@ -200,32 +196,41 @@ edge_t* graph_get_edge_s(char* src, char* dst, enum EdgeType edge_type, graph_t*
 edge_t* graph_get_edge_i(int src, int dst, enum EdgeType edge_type, graph_t*);
 edge_t* graph_get_edge_v(vertex_t* v_src, vertex_t* v_dst, enum EdgeType edge_type, graph_t*);
 
-/**
- * Path Functions
- */
+/***********************    Path Functions    ****************************/
 //linked_list_t* graph_path_get(int src, int dst, graph_t*);
 
-/**
- * Others
- */
+/***********************    Others    ****************************/
 void graph_print(graph_t*);	
 void graph_print_dot(char* file_name, graph_t*);
 void graph_print_dot_w(char* file_name, graph_t*);
 int graph_get_order (graph_t*);	// vertex number
 int graph_get_size (graph_t*);	// edge number
 
+/***********************    Profiling    ****************************/
 /**
- * Profiling
+ * Counts how many edges has a vertex.
+ *
+ * @param edge_type Wether you want to count directed edges, undirected edges or both.
  */
+int graph_get_vertex_grade_s(char* vertex_name, enum EdgeDirection edge_type, graph_t*);
+int graph_get_vertex_grade_i(int vertex_id, enum EdgeDirection edge_type, graph_t*);
+int graph_get_vertex_grade_v(vertex_t* v, enum EdgeDirection edge_type, graph_t*);
 
-int graph_vertex_grade_s(char* vertex_name, enum EdgeDirection edge_type, graph_t*);
-int graph_vertex_grade_i(int vertex_id, enum EdgeDirection edge_type, graph_t*);
-int graph_vertex_grade_v(vertex_t* v, enum EdgeDirection edge_type, graph_t*);
+/**
+ * Computes the cluster coefficient of a vertex.
+ * This value is the connectivity among its neighbors divided by the 
+ * maximum possible connectivity among its neighbors
+ */
+float graph_get_vertex_clustering_coefficient_s(char* vertex_name, enum EdgeType edge_type, graph_t*);
+float graph_get_vertex_clustering_coefficient_i(int vertex_id, enum EdgeType edge_type, graph_t*);
+float graph_get_vertex_clustering_coefficient_v(vertex_t* v, enum EdgeType edge_type, graph_t*);
 
-float graph_vertex_clustering_coefficient_s(char* vertex_name, enum EdgeDirection edge_type, graph_t*);
-float graph_vertex_clustering_coefficient_i(int vertex_id, enum EdgeDirection edge_type, graph_t*);
-float graph_vertex_clustering_coefficient_v(vertex_t* v, enum EdgeDirection edge_type, graph_t*);
-float graph_clustering_coefficient(enum EdgeDirection edge_type, graph_t*);     //FIXME
+/**
+ * Computes the average clustering coefficient of the graph.
+ * This value is the summation of the clustering coefficient of all vertices
+ * divided by the quantity of vertices.
+ */
+float graph_get_clustering_coefficient(enum EdgeType edge_type, graph_t*);     //FIXME
 
 
 void graph_plot(char* filename, enum Plot_Type, graph_t*);
