@@ -55,6 +55,20 @@ typedef struct vertex {
     vertex_id_t id;
 } vertex_t;
 
+typedef struct graph_stats{
+    char valid;
+    
+    int *grade;
+    float mean_grade;
+    
+    int * betweenness;
+    int *max_jumps; 
+    float *max_w;
+    
+    int   max_jumps_graph;
+    float max_w_graph;
+} graph_stats_t;
+
 typedef struct graph {
     khash_t(gr) *dict;
     array_list_t *vertices;
@@ -69,27 +83,24 @@ typedef struct graph {
     short int non_negative;
     //reemplazar todo por una mascara?
     
+    graph_stats_t stats;
+    
     int sync_mode;
 } graph_t;
 
 
-typedef struct path_node
-{
+typedef struct graph_path{
     float distance;
-    char visited;
     int father;
-    struct heap_node* hn;
-    int index;
-} path_node_t;
-
+} graph_path_t;
 
 #define GRAPH_MAX_NAME_LENGTH 256
 
 /// Wether an edge allows leaving a vertex, or reaching a vertex.
-enum EdgeDirection {GRAPH_EDGE_IN = 1, GRAPH_EDGE_OUT = 2, GRAPH_EDGE_ALL = 3};
+enum EdgeDirection {GRAPH_EDGE_IN = 1, GRAPH_EDGE_OUT = 2, GRAPH_EDGE_IN_OUT = 3};
 
 /// Wether an edge has directionality or not.
-enum EdgeType {GRAPH_EDGE_DIRECTED = 1, GRAPH_EDGE_NON_DIRECTED = 2};
+enum EdgeType {GRAPH_EDGE_DIRECTED = 1, GRAPH_EDGE_NON_DIRECTED = 2, GRAPH_EDGE_ALL = 3};
 
 /// Features of the graph, expressed in a mask.
 enum GraphType {
@@ -104,7 +115,7 @@ enum GraphType {
 };
 
 ///Plot Types
-enum Plot_Type {PLOT_GRADE};
+enum Plot_Type {PLOT_GRADE, PLOT_BETWEENNESS, PLOT_JUMPS};
 
 /**
  * Creation and initialization
@@ -219,6 +230,9 @@ float graph_clustering_coefficient(enum EdgeDirection edge_type, graph_t*);     
 
 void graph_plot(char* filename, enum Plot_Type, graph_t*);
 
-path_node_t * graph_run_dijkstra (vertex_t *orig, enum EdgeType edge_type, graph_t * graph_p);
+graph_path_t * graph_run_dijkstra (vertex_t *orig, enum EdgeType edge_type, graph_t * graph_p);
+
+void graph_run_path_stats(graph_t *graph_p);
+void graph_run_grade_stats(graph_t *graph_p);
 
 #endif //_GRAPH_H_

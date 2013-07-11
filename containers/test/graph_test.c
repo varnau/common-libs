@@ -136,7 +136,7 @@ END_TEST
 START_TEST(test_dijkstra)
 {
     int i;
-    path_node_t * p;
+    graph_path_t * p;
 
     //graph_print_dot("check_graph_cc.gv", g);
     //graph_print(g);

@@ -22,12 +22,15 @@ int main (void)
 	struct timespec ini_time;
 	
 	graph_t *g;
-	int num_vertices = 10;
-	int num_edges = 20000000;
+	long int num_vertices = 2000;
+	int num_edges = 20000;
 	int name_length = 255;
 	char ** names;
 	int i;
-	
+	float p;
+    p = (1.0*num_edges)/(num_vertices*num_vertices);
+    //p = 0.01;
+    
 	srand(time(NULL));
 	
 	names = (char**) malloc (sizeof(char*)*num_vertices);
@@ -60,8 +63,7 @@ int main (void)
 	//for (i = 0; i < num_edges; i++)
 		//graph_add_edge_iw(rand()%num_vertices, rand()%num_vertices, NULL, GRAPH_EDGE_DIRECTED, 1, g);
 	
-    float p = (1.0*num_edges)/(num_vertices*num_vertices);
-    p = 0.8;
+    
     printf("%f\n",p);
     graph_aleale(num_vertices, p, GRAPH_EDGE_DIRECTED, g);
     
@@ -69,20 +71,35 @@ int main (void)
 	
 	printf("solo cumplian las condiciones %d edges\n", g->num_edges);
 	
+
+	
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ini_time);//+++++++++++++++++++++++++++++++++++
+	
+	graph_path_t * path_l = graph_run_dijkstra((vertex_t*)(g->vertices->items[0]), GRAPH_EDGE_DIRECTED, g);
+
+	stop_crono("tiempo en Dijkstra: t =  %d s y %ld ns\n", &ini_time);//-----------------------
+
+    //printf("ID\t\tDist\t\tFather\n");
+    //for (i = 0; i < graph_get_order(g); i++)
+    //{
+        //printf("%d\t\t%f\t\t%d\n", i, path_l[i].distance, path_l    [i].father);
+    //}
+    
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ini_time);//+++++++++++++++++++++++++++++++++++
+    
+    graph_run_path_stats(g);
+	
+    stop_crono("tiempo en calcular estadisticas: t =  %d s y %ld ns\n", &ini_time);//-----------------------
+    
+    	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ini_time);//+++++++++++++++++++++++++++++++++++
 	
 	graph_print_dot_w("grafo_tiempo.gv", g);
     graph_plot("grade_tiempo.plt",PLOT_GRADE, g);
+    graph_plot("jumps_tiempo.plt",PLOT_JUMPS, g);
+    graph_plot("bt_tiempo.plt",PLOT_BETWEENNESS, g);
 
 	stop_crono("tiempo en print dot: t =  %d s y %ld ns\n", &ini_time);//-----------------------
-	
-	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ini_time);//+++++++++++++++++++++++++++++++++++
-	
-	graph_run_dijkstra((vertex_t*)(g->vertices->items[0]), GRAPH_EDGE_DIRECTED, g);
-
-	stop_crono("tiempo en Dijkstra: t =  %d s y %ld ns\n", &ini_time);//-----------------------
-	
-	
+    
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ini_time);//+++++++++++++++++++++++++++++++++++
 	
 	graph_free(NULL, NULL, g);
