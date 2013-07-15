@@ -249,11 +249,11 @@ void graph_run_grade_stats(graph_t *graph_p);
 /**
  * Calculates the vertex disjoint subgraphs in the graph.
  * 
- * @param vertices belonging to each subgraph.
- * @param
- * @return number of subgraphs
+ * @param graph
+ * @return list of lists of subgraphs
  */
-int graph_vertex_disjoint(int **subgraph, graph_t *graph_p);
-void graph_run_spanning_tree(int vertex_id, int **subgraph, graph_t *graph_p);
+
+linked_list_t* graph_vertex_disjoint(graph_t *graph_p);
+//void graph_run_spanning_tree(int vertex_id, int **subgraph, graph_t *graph_p);
 
 #endif //_GRAPH_H_

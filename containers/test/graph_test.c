@@ -27,6 +27,8 @@ void create_graph()
     graph_add_vertex("D", NULL, g);
     graph_add_vertex("E", NULL, g);
     graph_add_vertex("F", NULL, g);
+    graph_add_vertex("g", NULL, g);
+    graph_add_vertex("h", NULL, g);
 
     //graph_add_edge_sw("A", "B", NULL, GRAPH_EDGE_DIRECTED, 1, g);
     //graph_add_edge_sw("A", "C", NULL, GRAPH_EDGE_DIRECTED, 1, g);
@@ -43,6 +45,8 @@ void create_graph()
     geds(C,F,30);
     geds(F,E,1);
     geds(D,E,1);
+    geds(g,h,1);
+    geds(h,g,1);
 }
 
 void free_graph()
@@ -152,6 +156,12 @@ START_TEST(test_dijkstra)
 }
 END_TEST
 
+START_TEST(test_disjoint)
+{
+    linked_list_t *l = graph_vertex_disjoint(g);
+    fail_id(l->size != 2, "Vertex disjoint Subgraphs = 2\n");
+}
+END_TEST
 
 
 START_TEST(test_big_graph) {
@@ -229,9 +239,10 @@ Suite *create_test_suite(void) {
     //tcase_add_test(tc_create_free, test_create_free);
 
     TCase *tc_profiling = tcase_create("Profiling");
+    tcase_add_checked_fixture(tc_profiling, create_graph, free_graph);
     tcase_add_test(tc_profiling, test_cc_grade);
     tcase_add_test(tc_profiling, test_dijkstra);
-    tcase_add_checked_fixture(tc_profiling, create_graph, free_graph);
+    tcase_add_test(tc_profiling, test_disjoint);
     //tcase_add_test(tc_iterators, test_iterators);
 
     // Add test cases to a test suite
