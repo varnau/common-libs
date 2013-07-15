@@ -35,6 +35,7 @@
 #include "containers.h"
 #include "khash.h"
 #include "heap.h"
+#include <omp.h>
 
 KHASH_MAP_INIT_STR(gr,int)
 KHASH_MAP_INIT_INT(ii,int)
@@ -70,8 +71,12 @@ typedef struct graph_stats{
     int *max_jumps; 
     float *max_w;
     
-    int   max_jumps_graph;
-    float max_w_graph;
+    int *non_reach;
+    
+    int *non_isolated;
+    
+    int   max_jumps_path;
+    float max_w_path;
 } graph_stats_t;
 
 typedef struct graph {
@@ -89,7 +94,7 @@ typedef struct graph {
     //reemplazar todo por una mascara?
     
     graph_stats_t stats;
-    
+    int chunk;
     int sync_mode;
 } graph_t;
 
@@ -115,12 +120,13 @@ enum GraphType {
     GRAPH_CYCLIC				= 0b00000000,
     GRAPH_ACYCLIC				= 0b00000100,
     GRAPH_STRICT				= 0b00001000,
-    GRAPH_NON_NEGATIVE_WEIGHT	= 0b00010000
+    GRAPH_NON_NEGATIVE_WEIGHT	= 0b00010000,
+    GRAPH_UNITARY_WEIGHT    	= 0b00100000    //In run_stats don't need to count jumps 
     //GRAPH_MULTIPLE			0b00010000
 };
 
 ///Plot Types
-enum Plot_Type {PLOT_GRADE, PLOT_BETWEENNESS, PLOT_JUMPS};
+enum Plot_Type {PLOT_GRADE, PLOT_BETWEENNESS, PLOT_JUMPS, PLOT_NON_REACHABLE, PLOT_WEIGHT};
 
 /***********************    Creation and initialization    ****************************/
 /**
@@ -239,5 +245,15 @@ graph_path_t * graph_run_dijkstra (vertex_t *orig, enum EdgeType edge_type, grap
 
 void graph_run_path_stats(graph_t *graph_p);
 void graph_run_grade_stats(graph_t *graph_p);
+
+/**
+ * Calculates the vertex disjoint subgraphs in the graph.
+ * 
+ * @param vertices belonging to each subgraph.
+ * @param
+ * @return number of subgraphs
+ */
+int graph_vertex_disjoint(int **subgraph, graph_t *graph_p);
+void graph_run_spanning_tree(int vertex_id, int **subgraph, graph_t *graph_p);
 
 #endif //_GRAPH_H_
