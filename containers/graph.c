@@ -1617,75 +1617,36 @@ void graph_run_path_stats(graph_t *graph_p)
     
 }
 
-/*
-int graph_vertex_disjoint(int **subgraph, graph_t *graph_p)
-{
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    linked_list_t* queue = linked_list_new(graph_p->sync_mode);
-    vertex_t *v, *v_dst;
-    edge_t *e;
-    linked_list_iterator_t *iter = (linked_list_iterator_t*)malloc(sizeof(linked_list_iterator_t));
-    int i, fin = 0, dst_id;
-    char *c = (char*)calloc(graph_p->num_vertices, sizeof(char));   // already visted or not yet
 
-    v = graph_get_vertex_i(src, graph_p);
-    v_dst = graph_get_vertex_i(dst, graph_p);
-    if(v != NULL && v_dst != NULL)
+linked_list_t* graph_vertex_disjoint(graph_t *graph_p)
+{
+    linked_list_t *disjoint = linked_list_new(graph_p->sync_mode);
+    linked_list_t *l;
+    linked_list_iterator_t *iter = malloc(sizeof(linked_list_iterator_t));
+    int *spt = calloc(graph_p->num_vertices, sizeof(int));
+    vertex_t *v;
+    int v_id = 0;
+    
+    while(v_id < graph_p->num_vertices)
     {
-        linked_list_insert_last(v, queue);
-        c[v->id] = 1;
-        while(v = (vertex_t*)linked_list_remove_first(queue))
-        {
-            linked_list_iterator_init(v->dst, iter);
-            e = (edge_t*)linked_list_iterator_curr(iter);
-            while(e != NULL)
+        if(!spt[v_id]){        
+            l = graph_get_vertex_neighborhood_i(v_id,GRAPH_EDGE_ALL,graph_p->num_vertices, graph_p);
+            linked_list_insert(l, disjoint);
+            linked_list_iterator_init(l,iter);
+            
+            v = linked_list_iterator_curr(iter);
+            while(v)
             {
-                if(c[e->dst_id]==0){
-                    if(e->dst_id == dst){
-                        fin = 1;
-                        break;
-                    }
-                    linked_list_insert_last(graph_get_vertex_i(e->dst_id, graph_p),queue);
-                    c[e->dst_id] = 1;
-                }
-                e=(edge_t*)linked_list_iterator_next(iter);
-            }
-            if(!fin){
-                linked_list_iterator_init(v->nd, iter);
-                e = (edge_t*)linked_list_iterator_curr(iter);
-                while(e != NULL)
-                {
-                    dst_id = (e->dst_id != v->id)? e->dst_id: e->src_id; 
-                    if(c[dst_id]==0){
-                        if(dst_id == dst){
-                            fin = 1;
-                            break;
-                        }
-                        linked_list_insert_last(graph_get_vertex_i(dst_id, graph_p),queue);
-                        c[dst_id] = 1;
-                    }
-                    e=(edge_t*)linked_list_iterator_next(iter);
-                }
+                spt[v->id]=1;
+                v = linked_list_iterator_next(iter);
             }
         }
+        v_id++;
     }
-    linked_list_iterator_free(iter);
-    linked_list_free(queue, NULL);
-    free(c);
-    return fin-1;
+    free(spt);
+    return disjoint;
 }
-
+/*
 void graph_run_spanning_tree(int vertex_id, int **subgraph, graph_t *graph_p)
 {
     int *spt = calloc(graph_p->num_vertices, sizeof(int));
@@ -1694,11 +1655,22 @@ void graph_run_spanning_tree(int vertex_id, int **subgraph, graph_t *graph_p)
     spt[vertex_id] = 1;
     
     int i;
-    linked_list_item_t
+    linked_list_iterator_t *iter = malloc(sizeof(linked_list_iterator_t));
     while(v)
     {
-        for(i = 0; i < v->dst->size; i++)
-        
+        linked_list_iterator_init(v->dst, iter);
+        e = (edge_t*)linked_list_iterator_curr(iter);
+        while(e != NULL)
+        {
+            if(c[e->dst_id]==0){
+                if(e->dst_id == dst){
+                    fin = 1;
+                    break;
+                }
+                linked_list_insert_last(graph_get_vertex_i(e->dst_id, graph_p),queue);
+                c[e->dst_id] = 1;
+            }
+            e=(edge_t*)linked_list_iterator_next(iter);
+        }
     }
-}
-*/
+}*/
