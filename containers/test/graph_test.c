@@ -17,6 +17,33 @@ Suite *create_test_suite(void);
 #define geds(s,d,w) graph_add_edge_sw(#s,#d,NULL,GRAPH_EDGE_DIRECTED,w,g)
 #define ges(s,d,w) graph_add_edge_sw(#s,#d,NULL,GRAPH_EDGE_NON_DIRECTED,w,g)
 
+
+#define LINKED_LIST_FOR_EACH(void_p,list, code) {               \
+            linked_list_item_t *__it__ = list->first;         \
+            while(__it__ != NULL){                             \
+                void_p = __it__->item;                          \
+                __it__ = __it__->next;                          \
+                code;                                           \
+            }                                                   \
+        }
+#define ARRAY_LIST_FOR_EACH(void_p, array, code)                \
+            for(int __i__ = 0; __i__ < array->size; __i__++){  \
+                void_p = array->items[__i__];                   \
+                code;                                           \
+            }
+/*
+ *  vertex_t *v;
+ *  edge_t*e;
+ *  LINKED_LIST_FOR_EACH(v, g->vertices, 
+ *  {
+ *      printf("Vertice n = %s\n", v->name);
+ *      LINKED_LIST_FOR_EACH(e, v->nd, 
+ *      {
+ *          printf("");
+ *          
+ *      });
+ *  });
+ */
 void create_graph()
 {
     g = graph_new(GRAPH_MIXED_DIRECTED | GRAPH_CYCLIC| GRAPH_NON_NEGATIVE_WEIGHT, 20, COLLECTION_MODE_ASYNCHRONIZED);
@@ -30,14 +57,6 @@ void create_graph()
     graph_add_vertex("g", NULL, g);
     graph_add_vertex("h", NULL, g);
 
-    //graph_add_edge_sw("A", "B", NULL, GRAPH_EDGE_DIRECTED, 1, g);
-    //graph_add_edge_sw("A", "C", NULL, GRAPH_EDGE_DIRECTED, 1, g);
-    //graph_add_edge_sw("A", "C", NULL, GRAPH_EDGE_NON_DIRECTED, 1, g);
-    //graph_add_edge_sw("C", "D", NULL, GRAPH_EDGE_NON_DIRECTED, 1, g);
-    //graph_add_edge_sw("D", "B", NULL, GRAPH_EDGE_DIRECTED, 1, g);
-    //graph_add_edge_sw("C", "B", NULL, GRAPH_EDGE_DIRECTED, 1, g);
-    //graph_add_edge_sw("B", "D", NULL, GRAPH_EDGE_DIRECTED, 2, g);
-
     geds(A,C,1);
     geds(A,B,50);
     geds(B,D,1);
@@ -46,7 +65,17 @@ void create_graph()
     geds(F,E,1);
     geds(D,E,1);
     geds(g,h,1);
-    geds(h,g,1);
+    geds(h,g,1); 
+       
+    vertex_t *v;
+    edge_t*e;
+    int i = 0; 
+    ARRAY_LIST_FOR_EACH(v, g->vertices,
+        printf("Vertice n = %s\n", v->name);
+        LINKED_LIST_FOR_EACH(e, v->dst, printf("Elemento %d, %c\n", i, e->dst_id+'A');i++; );
+        LINKED_LIST_FOR_EACH(e, v->nd, printf("Elemento %d, %c\n", i, e->dst_id+'A');i++; );
+        LINKED_LIST_FOR_EACH(e, v->src, printf("Elemento %d, %c\n", i, e->dst_id+'A');i++; );
+    );
 }
 
 void free_graph()
@@ -158,8 +187,8 @@ END_TEST
 
 START_TEST(test_disjoint)
 {
-    linked_list_t *l = graph_vertex_disjoint(g);
-    fail_id(l->size != 2, "Vertex disjoint Subgraphs = 2\n");
+    array_list_t *l = graph_vertex_disjoint(g);
+    fail_if(l->size != 2, "Vertex disjoint Subgraphs = 2\n");
 }
 END_TEST
 

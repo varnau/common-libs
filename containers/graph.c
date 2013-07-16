@@ -1448,7 +1448,8 @@ void graph_run_path_stats(graph_t *graph_p)
             //is_disjoint = 1;
         //else
             //is_disjoint = 0;
-            
+        
+        
         max_jumps_path = 0;
         max_w_path = 0;
         if(stats == NULL)
@@ -1462,10 +1463,12 @@ void graph_run_path_stats(graph_t *graph_p)
             linked_list_insert(stats, list);
         }
 
-        //if(!(i%200))
-            //printf("Dijkstra %d \n",i);
+        if(!(i%10))
+            printf("Dijkstra %d \n",i);
         
-        v = array_list_get(i, graph_p->vertices);
+        v = graph_get_vertex_i(i, graph_p->vertices);
+        if(!v)
+            continue;
         path = graph_run_dijkstra(v, GRAPH_EDGE_ALL, graph_p);
         
         for(int j = v_it = 0; j < graph_p->num_vertices; v_it = ++j){
@@ -1560,10 +1563,11 @@ void graph_run_path_stats(graph_t *graph_p)
 }
 
 
-linked_list_t* graph_vertex_disjoint(graph_t *graph_p)
+array_list_t* graph_vertex_disjoint(graph_t *graph_p)
 {
-    linked_list_t *disjoint = linked_list_new(graph_p->sync_mode);
+    array_list_t *disjoint = array_list_new(1,1.5,graph_p->sync_mode);
     linked_list_t *l;
+    subgraph_t *subg;
     linked_list_iterator_t *iter = malloc(sizeof(linked_list_iterator_t));
     int *spt = calloc(graph_p->num_vertices, sizeof(int));
     vertex_t *v;
@@ -1572,10 +1576,14 @@ linked_list_t* graph_vertex_disjoint(graph_t *graph_p)
     while(v_id < graph_p->num_vertices)
     {
         if(!spt[v_id]){        
+            subg = malloc(sizeof(subgraph_t));
             l = graph_get_vertex_neighborhood_i(v_id,GRAPH_EDGE_ALL,graph_p->num_vertices, graph_p);
-            linked_list_insert(l, disjoint);
-            linked_list_iterator_init(l,iter);
+            array_list_insert(l, disjoint);
             
+            subg->vertices = l;
+            subg->num_vertices = l->size;
+            
+            linked_list_iterator_init(l,iter);
             v = linked_list_iterator_curr(iter);
             while(v)
             {

@@ -79,6 +79,14 @@ typedef struct graph_stats{
     float max_w_path;
 } graph_stats_t;
 
+typedef struct subgraph {
+    linked_list_t *vertices;
+    
+    int num_vertices;	//()
+    graph_stats_t stats;
+    
+}subgraph_t;
+
 typedef struct graph {
     khash_t(gr) *dict;
     array_list_t *vertices;
@@ -253,7 +261,7 @@ void graph_run_grade_stats(graph_t *graph_p);
  * @return list of lists of subgraphs
  */
 
-linked_list_t* graph_vertex_disjoint(graph_t *graph_p);
+array_list_t* graph_vertex_disjoint(graph_t *graph_p);
 //void graph_run_spanning_tree(int vertex_id, int **subgraph, graph_t *graph_p);
 
 #endif //_GRAPH_H_
