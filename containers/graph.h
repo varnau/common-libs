@@ -148,6 +148,12 @@ enum Plot_Type {PLOT_GRADE, PLOT_BETWEENNESS, PLOT_JUMPS, PLOT_NON_REACHABLE, PL
  * @param SYNC_MODE Wether the graph must use mutex or not.
  */
 graph_t* graph_new(enum GraphType mask, int initial_num_vertices, int SYNC_MODE);
+/**
+ * By the moment, 1 is  the unique valid value for m.
+ * @param order Number of vertices the graph returned will have.
+ * @param m Edges added each step.
+ */
+graph_t *graph_create_free_scale (enum GraphType mask, int order, int SYNC_MODE, int m);
 
 /***********************    Destruction    ****************************/
 

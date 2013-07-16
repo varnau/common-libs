@@ -143,7 +143,7 @@ int main (void)
     //}
     
     omp_set_num_threads(4);
-    RUN_TIME_TEST(graph_run_path_stats(g), base_time, "tiempo en calcular estadisticas con todos los hilos\n");
+    //RUN_TIME_TEST(graph_run_path_stats(g), base_time, "tiempo en calcular estadisticas con todos los hilos\n");
     
     
     int chunk[] = {500,200,100,50,30,20,10,5};
@@ -159,16 +159,28 @@ int main (void)
     RUN_TIME_TEST(
     {
         //graph_print_dot_w("grafo_tiempo.gv", g);
-        graph_plot("grade_tiempo.plt",PLOT_GRADE, g);
-        graph_plot("jumps_tiempo.plt",PLOT_JUMPS, g);
-        graph_plot("bt_tiempo.plt",PLOT_BETWEENNESS, g);
-        graph_plot("w_tiempo.plt",PLOT_WEIGHT, g);
-        graph_plot("nr_tiempo.plt",PLOT_NON_REACHABLE, g);
+        //graph_plot("grade_tiempo.plt",PLOT_GRADE, g);
+        //graph_plot("jumps_tiempo.plt",PLOT_JUMPS, g);
+        //graph_plot("bt_tiempo.plt",PLOT_BETWEENNESS, g);
+        //graph_plot("w_tiempo.plt",PLOT_WEIGHT, g);
+        //graph_plot("nr_tiempo.plt",PLOT_NON_REACHABLE, g);
     }, ini_time, "Tiempo en print dot\n");
     
 	RUN_TIME_TEST(graph_free(NULL, NULL, g), ini_time, "Tiempo en liberar grafo\n");
-	
-	for (i = 0; i < num_vertices; i++)
+    
+    
+    RUN_TIME_TEST(g = graph_create_free_scale (GRAPH_NON_NEGATIVE_WEIGHT | GRAPH_CYCLIC | GRAPH_NON_DIRECTED, 2000, COLLECTION_MODE_ASYNCHRONIZED, 1), ini_time, "Tiempo en generar un grafo libre de escala\n");
+    printf ("%s:%d g = %p\n", __FILE__, __LINE__, g);    // DEPURACION
+    graph_print_dot_w("grafo_tiempo.gv", g);
+    graph_run_path_stats(g);
+    graph_plot("jumps_tiempo.plt",PLOT_JUMPS, g);
+    graph_plot("bt_tiempo.plt",PLOT_BETWEENNESS, g);
+    graph_plot("w_tiempo.plt",PLOT_WEIGHT, g);
+    graph_plot("nr_tiempo.plt",PLOT_NON_REACHABLE, g);
+    graph_plot("grade_tiempo.plt",PLOT_GRADE, g);
+    graph_free(NULL, NULL, g);
+    
+    for (i = 0; i < num_vertices; i++)
 		free(names[i]);
 		
 	free (names);
