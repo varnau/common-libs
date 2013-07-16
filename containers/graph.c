@@ -46,6 +46,64 @@ graph_t* graph_new(enum GraphType mask, int initial_num_vertices, int SYNC_MODE)
     return g;
     
 }
+
+
+graph_t *graph_create_free_scale (enum GraphType mask, int order, int SYNC_MODE, int m)
+{
+    graph_t* g = graph_new(mask, order, SYNC_MODE);
+    enum EdgeType edge_type;
+    int *appearances = (int*) malloc (sizeof(int)*order*2);
+    int *inserted = (int*) malloc (sizeof(int)*m);
+    int i, j, k, end_pos = 0;
+    char name[20];
+    //srand(time(NULL));
+    
+
+    if (GRAPH_DIRECTED & mask)
+        edge_type = GRAPH_EDGE_DIRECTED;
+    else if (GRAPH_NON_DIRECTED & mask)
+        edge_type = GRAPH_EDGE_NON_DIRECTED;
+
+    
+    for (i = 0; i < m+1; i++)
+    {
+        sprintf(name, "%d", i);
+        graph_add_vertex(name, NULL, g);
+    }
+    
+    for (i = 0; i < m+1; i++)
+        for (j = i+1; j < m+1; j++)
+        {
+            graph_add_edge_iw (i, j, NULL, edge_type, 1, g);   // initial graph, full connectivity
+            appearances[end_pos++] = i;
+            appearances[end_pos++] = j;
+        }
+
+    for (i = m; i < order; i++)
+    {
+        sprintf(name, "%d", i);
+        graph_add_vertex(name, NULL, g);
+        inserted[0] = rand()%end_pos;
+        graph_add_edge_iw (i, appearances[inserted[0]], NULL, edge_type, 1, g);   // initial graph, full connectivity
+        appearances[end_pos++] = appearances[inserted[0]];
+        appearances[end_pos++] = i;
+    }
+    return g;
+/*
+    for (i = m; i < order; i++)
+    {
+        graph_add_vertex(itoa(i), NULL, g);
+        for (j = 0; j < m; j++)
+        {
+            
+            inserted[j] = rand()%end_pos;
+            
+            appearances[end_pos++] = i;
+            appearances[end_pos++] = j;
+            
+    */
+    
+}
 /***********************    Destruction    ****************************/
 
 int graph_free(void (*vertex_data_callback) (void* vertex_data), void (*edge_data_callback) (void* edge_data), graph_t* graph_p)
