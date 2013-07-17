@@ -182,6 +182,35 @@ START_TEST(test_cc_grade)
 }
 END_TEST
 
+START_TEST(test_bipartiteness)
+{
+    int i;
+    int ret;
+    int *distribution;
+    geds(E,A,1);
+    ges(g,A,1);
+    ges(B,C,1);
+    graph_remove_edge_s ("C","B", GRAPH_EDGE_DIRECTED, NULL, g);
+    graph_remove_vertex_s("A", NULL, NULL, g);
+
+    graph_print_dot("check_graph_bp.gv", g);
+    ret = graph_get_bipartiteness (NULL, GRAPH_EDGE_ALL, g);
+    fail_if(ret != 0, "bipartiteness(ALL): should be , but ret=%d", ret);
+    ret = graph_get_bipartiteness (NULL, GRAPH_EDGE_NON_DIRECTED, g);
+    fail_if(ret != 1, "bipartiteness(NON_DIRECTED): should be 1, but ret=%d", ret);
+    ret = graph_get_bipartiteness (&distribution, GRAPH_EDGE_DIRECTED, g);
+    fail_if(ret != 1, "bipartiteness(DIRECTED): should be 1, but ret=%d", ret);
+    printf ("%s:%d i = %d\n", __FILE__, __LINE__, i);    // DEPURACION
+    for (i = 0; i < g->num_vertices; i++)
+    {
+        if (graph_get_vertex_i(i, g) != NULL)
+            printf ("%s:%d i: %d, name = %s\n", __FILE__, __LINE__, i, graph_get_vertex_i(i, g)->name);  // DEPURACION
+        printf ("%s:%d distribution[%d] = %d\n", __FILE__, __LINE__, i, distribution[i]);    // DEPURACION
+    }
+    free(distribution);
+}
+END_TEST
+
 
 START_TEST(test_dijkstra)
 {
@@ -289,6 +318,7 @@ Suite *create_test_suite(void) {
     tcase_add_test(tc_profiling, test_cc_grade);
     tcase_add_test(tc_profiling, test_dijkstra);
     tcase_add_test(tc_profiling, test_disjoint);
+    tcase_add_test(tc_profiling, test_bipartiteness);
     //tcase_add_test(tc_iterators, test_iterators);
 
     // Add test cases to a test suite

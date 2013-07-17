@@ -254,6 +254,15 @@ float graph_get_vertex_clustering_coefficient_v(vertex_t* v, enum EdgeType edge_
  */
 float graph_get_clustering_coefficient(enum EdgeType edge_type, graph_t*);
 
+/**
+ * Computes wether the graph can be divided in two disjoint subgraphs and every edge
+ * connects both subgraphs. This means that each subgraph has a color, and any edge 
+ * connects vertex of the same color.
+ * @param color pointer to int array, shouldn't have memory allocated. It will have 
+ * the color of the vertex i at color[i]. 0: not in graph, 1: color one, 2: color two.
+ * @return 1: It is bipartite, 0: it is NOT bipartite.
+ */
+int graph_get_bipartiteness (int **color, enum EdgeType edge_type, graph_t* graph_p);
 
 void graph_plot(char* filename, enum Plot_Type, graph_t*);
 
