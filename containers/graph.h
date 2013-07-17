@@ -114,8 +114,8 @@ enum EdgeType {GRAPH_EDGE_DIRECTED = 1, GRAPH_EDGE_NON_DIRECTED = 2, GRAPH_EDGE_
 
 /// Features of the graph, expressed in a mask.
 enum GraphType {
-    GRAPH_NON_DIRECTED			= 0b00000001,
-    GRAPH_DIRECTED				= 0b00000010,
+    GRAPH_DIRECTED			= 0b00000001,
+    GRAPH_NON_DIRECTED				= 0b00000010,
     GRAPH_MIXED_DIRECTED		= 0b00000011,
     GRAPH_CYCLIC				= 0b00000000,
     GRAPH_ACYCLIC				= 0b00000100,
@@ -177,9 +177,9 @@ void* graph_get_vertex_data_i(int id, graph_t*);
  * @param edge_type Wether you want to list vertices reachables (childs or destinations), or vertices with
  * reverse direction (fathers or sources).
  */
-linked_list_t* graph_get_vertex_neighborhood_v(vertex_t* vertex_p, enum EdgeDirection edge_type, int k_jumps, graph_t*);
-linked_list_t* graph_get_vertex_neighborhood_s(char* name, enum EdgeDirection edge_type, int k_jumps, graph_t*);
-linked_list_t* graph_get_vertex_neighborhood_i(int vertex_id, enum EdgeDirection edge_type, int k_jumps, graph_t*);
+linked_list_t* graph_get_vertex_neighborhood_v(vertex_t* vertex_p, enum EdgeDirection edge_dir, int k_jumps, graph_t*);
+linked_list_t* graph_get_vertex_neighborhood_s(char* name, enum EdgeDirection edge_dir, int k_jumps, graph_t*);
+linked_list_t* graph_get_vertex_neighborhood_i(int vertex_id, enum EdgeDirection edge_dir, int k_jumps, graph_t*);
 
 linked_list_t* graph_get_vertex_adjacents_v(vertex_t* vertex_p, graph_t*);
 linked_list_t* graph_get_vertex_adjacents_s(char* name, graph_t*);
@@ -222,16 +222,18 @@ int graph_get_size (graph_t*);	// edge number
 /**
  * Counts how many edges has a vertex.
  *
- * @param edge_type Wether you want to count directed edges, undirected edges or both.
+ * @param edge_dir Wether you want to count incoming edges, outcoming egdes, or all of them.
  */
-int graph_get_vertex_grade_s(char* vertex_name, enum EdgeDirection edge_type, graph_t*);
-int graph_get_vertex_grade_i(int vertex_id, enum EdgeDirection edge_type, graph_t*);
-int graph_get_vertex_grade_v(vertex_t* v, enum EdgeDirection edge_type, graph_t*);
+int graph_get_vertex_grade_s(char* vertex_name, enum EdgeDirection edge_dir, graph_t*);
+int graph_get_vertex_grade_i(int vertex_id, enum EdgeDirection edge_dir, graph_t*);
+int graph_get_vertex_grade_v(vertex_t* v, enum EdgeDirection edge_dir, graph_t*);
 
 /**
  * Computes the cluster coefficient of a vertex.
  * This value is the connectivity among its neighbors divided by the 
  * maximum possible connectivity among its neighbors
+ * @return valid values are within [0,1], if return==-1 the vertex had 1 or less neighbors, making
+ * the maximum possible edges == 0, triggering a division by 0
  */
 float graph_get_vertex_clustering_coefficient_s(char* vertex_name, enum EdgeType edge_type, graph_t*);
 float graph_get_vertex_clustering_coefficient_i(int vertex_id, enum EdgeType edge_type, graph_t*);
@@ -242,7 +244,7 @@ float graph_get_vertex_clustering_coefficient_v(vertex_t* v, enum EdgeType edge_
  * This value is the summation of the clustering coefficient of all vertices
  * divided by the quantity of vertices.
  */
-float graph_get_clustering_coefficient(enum EdgeType edge_type, graph_t*);     //FIXME
+float graph_get_clustering_coefficient(enum EdgeType edge_type, graph_t*);
 
 
 void graph_plot(char* filename, enum Plot_Type, graph_t*);

@@ -117,22 +117,49 @@ START_TEST(test_cc_grade)
 {
     int ret;
     float cc;
-    graph_print_dot("check_graph_cc.gv", g);
-    graph_print(g);
 
     ret = graph_get_vertex_grade_s("A", GRAPH_EDGE_OUT, g);
-    fail_if(ret != 3, "grade(A): should be 3, but ret=%d", ret);
+    fail_if(ret != 2, "grade(A): should be 2, but ret=%d", ret);
 
     ret = graph_get_vertex_grade_s("C", GRAPH_EDGE_IN, g);
-    fail_if(ret != 3, "grade_in(A): should be 3, but ret=%d", ret);
+    fail_if(ret != 1, "grade_in(C): should be 1, but ret=%d", ret);
     ret = graph_get_vertex_grade_s("C", GRAPH_EDGE_OUT, g);
-    fail_if(ret != 3, "grade_out(A): should be 3, but ret=%d", ret);
+    fail_if(ret != 2, "grade_out(C): should be 2, but ret=%d", ret);
     ret = graph_get_vertex_grade_s("C", GRAPH_EDGE_ALL, g);
-    fail_if(ret != 4, "grade_all(A): should be 4, but ret=%d", ret);
+    fail_if(ret != 3, "grade_all(C): should be 3, but ret=%d", ret);
 
+    geds(C,A,1);
+    geds(F,B,1);
+    ges(C,B,1);
+    //geds(C,D,1);
+    ges(A,C,1);
 
-    cc = graph_get_vertex_clustering_coefficient_s ("A", GRAPH_EDGE_OUT, g);
-    fail_if(cc != 0.5, "clustering_coefficient(A): should be 0.5, but cc=%f", cc);
+    graph_print_dot("check_graph_cc1.gv", g);
+    //graph_print(g);
+    
+    cc = graph_get_vertex_clustering_coefficient_s ("B", GRAPH_EDGE_DIRECTED, g);
+    fail_if(cc != -1, "clustering_coefficient(B): should be -1, but cc=%f", cc);
+    cc = graph_get_vertex_clustering_coefficient_s ("C", GRAPH_EDGE_DIRECTED, g);
+    fail_if(abs(cc - 1.0/3) > 0.00001, "clustering_coefficient(C): should be 1/3, but cc=%f", cc);
+    cc = graph_get_vertex_clustering_coefficient_s ("A", GRAPH_EDGE_ALL, g);
+    fail_if(abs(cc - 2.0/3) > 0.00001, "clustering_coefficient(A, dir | non_dir): should be 2/3, but cc=%f", cc);
+    cc = graph_get_vertex_clustering_coefficient_s ("A", GRAPH_EDGE_DIRECTED, g);
+    fail_if(cc != 0.5, "clustering_coefficient(A, dir): should be 0.5, but cc=%f", cc);
+    cc = graph_get_vertex_clustering_coefficient_s ("A", GRAPH_EDGE_NON_DIRECTED, g);
+    fail_if(cc != -1, "clustering_coefficient(A, non_dir): should be -1, but cc=%f", cc);
+
+    graph_remove_edge_s ("B","D", GRAPH_EDGE_DIRECTED, NULL, g);
+    graph_remove_vertex_s ("E", NULL, NULL, g);
+    graph_remove_vertex_s ("g", NULL, NULL, g);
+    graph_remove_vertex_s ("h", NULL, NULL, g);
+
+    cc = graph_get_clustering_coefficient (GRAPH_EDGE_ALL, g);
+    fail_if(abs(cc - 7.0/45) > 0.00001, "clustering_coefficient(ALL): should be 0.17777, but cc=%f", cc);
+    cc = graph_get_clustering_coefficient (GRAPH_EDGE_DIRECTED, g);
+    fail_if(abs(cc - 5.0/6) > 0.00001, "clustering_coefficient(DIRECTED): should be 0.16666, but cc=%f", cc);
+    cc = graph_get_clustering_coefficient (GRAPH_EDGE_NON_DIRECTED, g);
+    fail_if(cc != 0, "clustering_coefficient(NON_DIRECTED): should be 0, but cc=%f", cc);
+    graph_print_dot("check_graph_cc2.gv", g);
 }
 END_TEST
 
@@ -159,7 +186,7 @@ END_TEST
 START_TEST(test_disjoint)
 {
     linked_list_t *l = graph_vertex_disjoint(g);
-    fail_id(l->size != 2, "Vertex disjoint Subgraphs = 2\n");
+    fail_if(l->size != 2, "Vertex disjoint Subgraphs = 2\n");
 }
 END_TEST
 

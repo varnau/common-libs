@@ -319,31 +319,31 @@ linked_list_t* graph_get_vertex_neighborhood_v(vertex_t* vertex_p, enum EdgeDire
     assert(graph_p);
     if(vertex_p == NULL)
         return NULL;
-    
+
     linked_list_t *queue = linked_list_new(COLLECTION_MODE_ASYNCHRONIZED); 
     if(k <= 0){
         linked_list_insert_last(vertex_p, queue);
         return queue;
     }
-    
+
     khash_t(ii) *visited = kh_init(ii);
-    
+
     linked_list_iterator_t *iter = linked_list_iterator_new(queue);
     linked_list_iterator_t *iter_edge = linked_list_iterator_new(queue);
     vertex_t *v = vertex_p;
     edge_t *e;
-    
+
     int in = edge_type & GRAPH_EDGE_IN;
     int out = edge_type & GRAPH_EDGE_OUT;
     int dst, ret;
-    
+
     //Insert a NULL to indicate the distance from the origin was increased.
     //You can know the distance to the origin counting the NULLs 
     //(in fact, you can't, because those NULL are deleted)
     linked_list_insert_last(v, queue);
     linked_list_insert_last(NULL, queue);
     linked_list_iterator_first(iter);
-    
+
     kh_put(ii,visited,v->id,&ret);
     //printf("k = %d\n",k);
     while(1)
@@ -354,8 +354,8 @@ linked_list_t* graph_get_vertex_neighborhood_v(vertex_t* vertex_p, enum EdgeDire
             //printf("k = %d\n",k);
             linked_list_iterator_remove(iter);
             if(linked_list_iterator_curr(iter) == NULL)	//If it was the last NULL, break;
-                break;
-        
+            break;
+
             if(k <= 0)
                 break;
             else
@@ -365,7 +365,7 @@ linked_list_t* graph_get_vertex_neighborhood_v(vertex_t* vertex_p, enum EdgeDire
                 continue;
             }
         }
-        
+
         //printf("--VERTEX-- %d\n", v->id);
         if(in)
         {
@@ -389,7 +389,7 @@ linked_list_t* graph_get_vertex_neighborhood_v(vertex_t* vertex_p, enum EdgeDire
                 kh_put(ii,visited,e->dst_id,&ret);
                 if(ret != 0)
                     linked_list_insert_last( array_list_get(e->dst_id, graph_p->vertices), queue); 	//inserts in the queue
-                
+
                 e= (edge_t*)linked_list_iterator_next(iter_edge);
             }
         }
@@ -399,7 +399,7 @@ linked_list_t* graph_get_vertex_neighborhood_v(vertex_t* vertex_p, enum EdgeDire
             while(e != NULL)
             {
                 dst = (e->dst_id!=v->id)? e->dst_id: e->src_id;
-                
+
                 kh_put(ii,visited,dst,&ret);
                 if(ret != 0){
                     linked_list_insert_last( array_list_get(dst, graph_p->vertices), queue); 	//inserts in the queue
@@ -409,14 +409,14 @@ linked_list_t* graph_get_vertex_neighborhood_v(vertex_t* vertex_p, enum EdgeDire
                 e= (edge_t*)linked_list_iterator_next(iter_edge);
             }
         }
-        
+
         v = (vertex_t*)linked_list_iterator_next(iter);
     }
-    
+
     linked_list_iterator_free(iter);
     linked_list_iterator_free(iter_edge);
     kh_destroy(ii,visited);
-    
+
     return queue;
 }
 inline linked_list_t* graph_get_vertex_neighborhood_s(char* name, enum EdgeDirection edge_type, int k_jumps, graph_t* graph_p)
@@ -983,17 +983,17 @@ inline int graph_get_size (graph_t* graph_p)
 
 /***********************    Profiling    ****************************/
 
-inline int graph_get_vertex_grade_s(char* vertex_name, enum EdgeDirection edge_type, graph_t* graph_p)
+inline int graph_get_vertex_grade_s(char* vertex_name, enum EdgeDirection edge_dir, graph_t* graph_p)
 {
-    return graph_get_vertex_grade_v (graph_get_vertex_s (vertex_name, graph_p), edge_type, graph_p);
+    return graph_get_vertex_grade_v (graph_get_vertex_s (vertex_name, graph_p), edge_dir, graph_p);
 }
 
-inline int graph_get_vertex_grade_i(int vertex_id, enum EdgeDirection edge_type, graph_t* graph_p)
+inline int graph_get_vertex_grade_i(int vertex_id, enum EdgeDirection edge_dir, graph_t* graph_p)
 {
-    return graph_get_vertex_grade_v (graph_get_vertex_i (vertex_id, graph_p), edge_type, graph_p);
+    return graph_get_vertex_grade_v (graph_get_vertex_i (vertex_id, graph_p), edge_dir, graph_p);
 }
 
-int graph_get_vertex_grade_v(vertex_t * v, enum EdgeDirection edge_type, graph_t* graph_p)
+int graph_get_vertex_grade_v(vertex_t * v, enum EdgeDirection edge_dir, graph_t* graph_p)
 {
     assert(graph_p);
     if (v == NULL)
@@ -1003,10 +1003,10 @@ int graph_get_vertex_grade_v(vertex_t * v, enum EdgeDirection edge_type, graph_t
 
     n_edges = linked_list_size(v->nd);
 
-    if (edge_type & GRAPH_EDGE_IN)
+    if (edge_dir & GRAPH_EDGE_IN)
         n_edges += linked_list_size(v->src);
     
-    if (edge_type & GRAPH_EDGE_OUT)
+    if (edge_dir & GRAPH_EDGE_OUT)
         n_edges += linked_list_size(v->dst);
     
     return n_edges;
@@ -1027,42 +1027,104 @@ float graph_get_vertex_clustering_coefficient_v (vertex_t* v, enum EdgeType edge
     assert(graph_p);
     if (v == NULL)
         return -1;
-    
-    linked_list_t * l = graph_get_vertex_neighborhood_v (v, edge_type, 1, graph_p);
+
+    int dir_mode = (edge_type & GRAPH_EDGE_DIRECTED) && (graph_p->directed & GRAPH_DIRECTED);
+    int non_dir_mode = (edge_type & GRAPH_EDGE_NON_DIRECTED) && (graph_p->directed & GRAPH_NON_DIRECTED);
+
+    linked_list_t * l = linked_list_new (graph_p->sync_mode);   // list of adjacent nodes
+
+    linked_list_iterator_t * iter = linked_list_iterator_new(v->dst);
+    edge_t *e;
+    vertex_t *v_aux;
+    int e_id;
+
+    if (dir_mode && non_dir_mode)
+    {
+        linked_list_iterator_init (v->dst, iter);
+        e = linked_list_iterator_curr (iter);
+        while (e != NULL)
+        {
+            linked_list_insert (graph_get_vertex_i (e->dst_id, graph_p), l);
+            e = linked_list_iterator_next(iter);
+        }
+
+        linked_list_iterator_init (v->nd, iter);
+        e = linked_list_iterator_curr (iter);
+        while (e != NULL)
+        {
+            e_id = (e->dst_id == v->id)? e->src_id: e->dst_id;
+            v_aux = graph_get_vertex_i (e_id, graph_p);
+            if (linked_list_contains (v_aux, l) == 0)   // insert unless it is already in the list
+                linked_list_insert (v_aux, l);
+
+            e = linked_list_iterator_next(iter);
+        }
+    }
+    else if (dir_mode)
+    {
+        linked_list_iterator_init (v->dst, iter);
+        e = linked_list_iterator_curr (iter);
+        while (e != NULL)
+        {
+            linked_list_insert (graph_get_vertex_i (e->dst_id, graph_p), l);
+            e = linked_list_iterator_next(iter);
+        }
+    }
+    else if (non_dir_mode)
+    {
+        linked_list_iterator_init (v->nd, iter);
+        e = linked_list_iterator_curr (iter);
+        while (e != NULL)
+        {
+            e_id = (e->dst_id == v->id)? e->src_id: e->dst_id;
+            linked_list_insert (graph_get_vertex_i (e_id, graph_p), l);
+            e = linked_list_iterator_next(iter);
+        }
+    }
+
     int num_adjacent = linked_list_size (l);
-    int max_edges = (num_adjacent * (num_adjacent-1)/* / 2*/);
+    int max_edges = 0;
     int curr_edges = 0;
+
+    if (num_adjacent <= 1)
+    {
+        linked_list_iterator_free(iter);
+        linked_list_free (l, NULL);
+        return -1;
+    }
+
+    if (dir_mode)
+        max_edges += num_adjacent * (num_adjacent-1);
+    if (non_dir_mode)
+        max_edges += (num_adjacent * (num_adjacent-1))/2;
+
     linked_list_iterator_t* iter1 = linked_list_iterator_new (l);
     linked_list_iterator_t* iter2 = linked_list_iterator_new (l);
     vertex_t* v_neighbor1 = (vertex_t*)linked_list_iterator_curr(iter1);
-    vertex_t* v_neighbor2 = (vertex_t*)linked_list_iterator_curr(iter2);
-    
-    while(v_neighbor1 != NULL)
+    vertex_t* v_neighbor2 ;
+
+    while(v_neighbor1 != NULL)  // travel upper triangular matrix
     {
+        v_neighbor2 = (vertex_t*)linked_list_iterator_next(iter2);  // skips (v_neighbor1 == v_neighbor2) iteration
         while (v_neighbor2 != NULL)
         {
-            if(graph_p->directed & GRAPH_NON_DIRECTED)
+            if (non_dir_mode)
                 if (graph_get_edge_v (v_neighbor1, v_neighbor2, GRAPH_EDGE_NON_DIRECTED, graph_p) != NULL)
-                {
-                    curr_edges+=2;
-                }
-            if(graph_p->directed & GRAPH_NON_DIRECTED)
+                    curr_edges++;
+
+            if (dir_mode)
             {
                 if (graph_get_edge_v (v_neighbor1, v_neighbor2, GRAPH_EDGE_DIRECTED, graph_p) != NULL)
-                {
                     curr_edges++;
-                }
                 if (graph_get_edge_v (v_neighbor2, v_neighbor1, GRAPH_EDGE_DIRECTED, graph_p) != NULL)
-                {
                     curr_edges++;
-                }
             }
             v_neighbor2 = (vertex_t*) linked_list_iterator_next (iter2);
         }
 
-        v_neighbor1 = (vertex_t*) linked_list_iterator_next (iter1);
-        v_neighbor2 = (vertex_t*) linked_list_iterator_first (iter2);
+        v_neighbor2 = v_neighbor1 = (vertex_t*) linked_list_iterator_next (iter1);
     }
+    linked_list_iterator_free(iter);
     linked_list_iterator_free(iter1);
     linked_list_iterator_free(iter2);
     linked_list_free (l, NULL);
@@ -1074,12 +1136,16 @@ float graph_get_clustering_coefficient (enum EdgeType edge_type, graph_t* graph_
 {
     assert(graph_p);
     float cc = 0;
+    float partial_cc;
     int num_adjacent, i;
-
     for (i = 0; i < graph_p->num_vertices; i++)
-        cc += graph_get_vertex_clustering_coefficient_i(i, edge_type, graph_p);
-    
-    cc /= graph_p->num_vertices;
+    {
+        partial_cc = graph_get_vertex_clustering_coefficient_i(i, edge_type, graph_p);
+        if (partial_cc >= 0)
+            cc += partial_cc;
+    }
+
+    cc /= graph_get_order(graph_p);
 
     return cc;
 }
