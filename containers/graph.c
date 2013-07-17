@@ -319,31 +319,31 @@ linked_list_t* graph_get_vertex_neighborhood_v(vertex_t* vertex_p, enum EdgeDire
     assert(graph_p);
     if(vertex_p == NULL)
         return NULL;
-
+    
     linked_list_t *queue = linked_list_new(COLLECTION_MODE_ASYNCHRONIZED); 
     if(k <= 0){
         linked_list_insert_last(vertex_p, queue);
         return queue;
     }
-
+    
     khash_t(ii) *visited = kh_init(ii);
-
+    
     linked_list_iterator_t *iter = linked_list_iterator_new(queue);
     linked_list_iterator_t *iter_edge = linked_list_iterator_new(queue);
     vertex_t *v = vertex_p;
     edge_t *e;
-
+    
     int in = edge_type & GRAPH_EDGE_IN;
     int out = edge_type & GRAPH_EDGE_OUT;
     int dst, ret;
-
+    
     //Insert a NULL to indicate the distance from the origin was increased.
     //You can know the distance to the origin counting the NULLs 
     //(in fact, you can't, because those NULL are deleted)
     linked_list_insert_last(v, queue);
     linked_list_insert_last(NULL, queue);
     linked_list_iterator_first(iter);
-
+    
     kh_put(ii,visited,v->id,&ret);
     //printf("k = %d\n",k);
     while(1)
@@ -354,8 +354,8 @@ linked_list_t* graph_get_vertex_neighborhood_v(vertex_t* vertex_p, enum EdgeDire
             //printf("k = %d\n",k);
             linked_list_iterator_remove(iter);
             if(linked_list_iterator_curr(iter) == NULL)	//If it was the last NULL, break;
-            break;
-
+                break;
+        
             if(k <= 0)
                 break;
             else
@@ -365,7 +365,7 @@ linked_list_t* graph_get_vertex_neighborhood_v(vertex_t* vertex_p, enum EdgeDire
                 continue;
             }
         }
-
+        
         //printf("--VERTEX-- %d\n", v->id);
         if(in)
         {
@@ -389,7 +389,7 @@ linked_list_t* graph_get_vertex_neighborhood_v(vertex_t* vertex_p, enum EdgeDire
                 kh_put(ii,visited,e->dst_id,&ret);
                 if(ret != 0)
                     linked_list_insert_last( array_list_get(e->dst_id, graph_p->vertices), queue); 	//inserts in the queue
-
+                
                 e= (edge_t*)linked_list_iterator_next(iter_edge);
             }
         }
@@ -399,7 +399,7 @@ linked_list_t* graph_get_vertex_neighborhood_v(vertex_t* vertex_p, enum EdgeDire
             while(e != NULL)
             {
                 dst = (e->dst_id!=v->id)? e->dst_id: e->src_id;
-
+                
                 kh_put(ii,visited,dst,&ret);
                 if(ret != 0){
                     linked_list_insert_last( array_list_get(dst, graph_p->vertices), queue); 	//inserts in the queue
@@ -409,14 +409,14 @@ linked_list_t* graph_get_vertex_neighborhood_v(vertex_t* vertex_p, enum EdgeDire
                 e= (edge_t*)linked_list_iterator_next(iter_edge);
             }
         }
-
+        
         v = (vertex_t*)linked_list_iterator_next(iter);
     }
-
+    
     linked_list_iterator_free(iter);
     linked_list_iterator_free(iter_edge);
     kh_destroy(ii,visited);
-
+    
     return queue;
 }
 inline linked_list_t* graph_get_vertex_neighborhood_s(char* name, enum EdgeDirection edge_type, int k_jumps, graph_t* graph_p)
@@ -1101,7 +1101,7 @@ float graph_get_vertex_clustering_coefficient_v (vertex_t* v, enum EdgeType edge
     linked_list_iterator_t* iter1 = linked_list_iterator_new (l);
     linked_list_iterator_t* iter2 = linked_list_iterator_new (l);
     vertex_t* v_neighbor1 = (vertex_t*)linked_list_iterator_curr(iter1);
-    vertex_t* v_neighbor2 ;
+    vertex_t* v_neighbor2;
 
     while(v_neighbor1 != NULL)  // travel upper triangular matrix
     {
@@ -1572,7 +1572,8 @@ void graph_run_path_stats(graph_t *graph_p)
             //is_disjoint = 1;
         //else
             //is_disjoint = 0;
-            
+        
+        
         max_jumps_path = 0;
         max_w_path = 0;
         if(stats == NULL)
@@ -1586,10 +1587,12 @@ void graph_run_path_stats(graph_t *graph_p)
             linked_list_insert(stats, list);
         }
 
-        //if(!(i%200))
-            //printf("Dijkstra %d \n",i);
+        if(!(i%10))
+            printf("Dijkstra %d \n",i);
         
-        v = array_list_get(i, graph_p->vertices);
+        v = graph_get_vertex_i(i, graph_p);
+        if(!v)
+            continue;
         path = graph_run_dijkstra(v, GRAPH_EDGE_ALL, graph_p);
         
         for(int j = v_it = 0; j < graph_p->num_vertices; v_it = ++j){
@@ -1684,10 +1687,11 @@ void graph_run_path_stats(graph_t *graph_p)
 }
 
 
-linked_list_t* graph_vertex_disjoint(graph_t *graph_p)
+array_list_t* graph_vertex_disjoint(graph_t *graph_p)
 {
-    linked_list_t *disjoint = linked_list_new(graph_p->sync_mode);
+    array_list_t *disjoint = array_list_new(1,1.5,graph_p->sync_mode);
     linked_list_t *l;
+    subgraph_t *subg;
     linked_list_iterator_t *iter = malloc(sizeof(linked_list_iterator_t));
     int *spt = calloc(graph_p->num_vertices, sizeof(int));
     vertex_t *v;
@@ -1696,10 +1700,14 @@ linked_list_t* graph_vertex_disjoint(graph_t *graph_p)
     while(v_id < graph_p->num_vertices)
     {
         if(!spt[v_id]){        
+            subg = malloc(sizeof(subgraph_t));
             l = graph_get_vertex_neighborhood_i(v_id,GRAPH_EDGE_ALL,graph_p->num_vertices, graph_p);
-            linked_list_insert(l, disjoint);
-            linked_list_iterator_init(l,iter);
+            array_list_insert(l, disjoint);
             
+            subg->vertices = l;
+            subg->num_vertices = l->size;
+            
+            linked_list_iterator_init(l,iter);
             v = linked_list_iterator_curr(iter);
             while(v)
             {
