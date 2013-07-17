@@ -1687,11 +1687,10 @@ void graph_run_path_stats(graph_t *graph_p)
 }
 
 
-array_list_t* graph_vertex_disjoint(graph_t *graph_p)
+linked_list_t* graph_vertex_disjoint(graph_t *graph_p)
 {
-    array_list_t *disjoint = array_list_new(1,1.5,graph_p->sync_mode);
+    linked_list_t *disjoint = linked_list_new(graph_p->sync_mode);
     linked_list_t *l;
-    subgraph_t *subg;
     linked_list_iterator_t *iter = malloc(sizeof(linked_list_iterator_t));
     int *spt = calloc(graph_p->num_vertices, sizeof(int));
     vertex_t *v;
@@ -1700,14 +1699,10 @@ array_list_t* graph_vertex_disjoint(graph_t *graph_p)
     while(v_id < graph_p->num_vertices)
     {
         if(!spt[v_id]){        
-            subg = malloc(sizeof(subgraph_t));
             l = graph_get_vertex_neighborhood_i(v_id,GRAPH_EDGE_ALL,graph_p->num_vertices, graph_p);
-            array_list_insert(l, disjoint);
-            
-            subg->vertices = l;
-            subg->num_vertices = l->size;
-            
+            linked_list_insert(l, disjoint);
             linked_list_iterator_init(l,iter);
+            
             v = linked_list_iterator_curr(iter);
             while(v)
             {
