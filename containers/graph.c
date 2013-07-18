@@ -25,7 +25,7 @@ graph_t* graph_new(enum GraphType mask, int initial_num_vertices, int SYNC_MODE)
     else if(mask & GRAPH_DIRECTED)
         g->directed = GRAPH_DIRECTED;
     else
-        g->directed = GRAPH_NON_DIRECTED;	//default value
+        g->directed = GRAPH_NON_DIRECTED;   //default value
     
     g->cyclic = (mask & GRAPH_ACYCLIC)? 0: 1;
     //g->multiple = (mask & GRAPH_MULTIPLE)? 1: 0;
@@ -143,7 +143,7 @@ int graph_clear(void (*vertex_data_callback) (void* vertex_data), void (*edge_da
         }
         if(edge_data_callback)
         {
-            iter = linked_list_iterator_init(v->dst, iter);	// free dst data
+            iter = linked_list_iterator_init(v->dst, iter); // free dst data
             e = (edge_t*) linked_list_iterator_curr(iter);
             
             while (e != NULL)
@@ -153,7 +153,7 @@ int graph_clear(void (*vertex_data_callback) (void* vertex_data), void (*edge_da
             }
             
             
-            iter = linked_list_iterator_init(v->nd, iter);	// free nd data and edge (only when e->src_id==-1, else sets to -1)
+            iter = linked_list_iterator_init(v->nd, iter);  // free nd data and edge (only when e->src_id==-1, else sets to -1)
             e = (edge_t*) linked_list_iterator_curr(iter);
             while (e != NULL)
             {
@@ -183,7 +183,7 @@ int graph_clear(void (*vertex_data_callback) (void* vertex_data), void (*edge_da
         }
         
         linked_list_free(v->src, NULL);
-        linked_list_free(v->dst, free);	// free dst edge
+        linked_list_free(v->dst, free); // free dst edge
         linked_list_free(v->nd, NULL);
         
         free(v->name);
@@ -213,7 +213,7 @@ int graph_find_vertex(char* name, graph_t* graph_p){
     
     khiter_t k = kh_get(gr,graph_p->dict,name);
     
-    if(k == kh_end(graph_p->dict))	//If it was not found, ret -1
+    if(k == kh_end(graph_p->dict))  //If it was not found, ret -1
         return -1;
     else
         return kh_value(graph_p->dict, k);
@@ -232,7 +232,7 @@ vertex_t* graph_get_vertex_i(int vertex_id, graph_t * graph_p)
     {
         v = (vertex_t*)array_list_get(vertex_id, graph_p->vertices);
         if (v != NULL)
-            if (v->src == NULL)	// v is in the removed_vertex list
+            if (v->src == NULL) // v is in the removed_vertex list
                 v = NULL;
     }
     return v;
@@ -353,7 +353,7 @@ linked_list_t* graph_get_vertex_neighborhood_v(vertex_t* vertex_p, enum EdgeDire
             k--;
             //printf("k = %d\n",k);
             linked_list_iterator_remove(iter);
-            if(linked_list_iterator_curr(iter) == NULL)	//If it was the last NULL, break;
+            if(linked_list_iterator_curr(iter) == NULL) //If it was the last NULL, break;
                 break;
         
             if(k <= 0)
@@ -375,7 +375,7 @@ linked_list_t* graph_get_vertex_neighborhood_v(vertex_t* vertex_p, enum EdgeDire
             {
                 kh_put(ii,visited,e->src_id,&ret);
                 if(ret != 0)
-                    linked_list_insert_last( array_list_get(e->src_id, graph_p->vertices), queue); 	//inserts in the queue
+                    linked_list_insert_last( array_list_get(e->src_id, graph_p->vertices), queue);  //inserts in the queue
 
                 e= (edge_t*)linked_list_iterator_next(iter_edge);
             }
@@ -388,7 +388,7 @@ linked_list_t* graph_get_vertex_neighborhood_v(vertex_t* vertex_p, enum EdgeDire
             {
                 kh_put(ii,visited,e->dst_id,&ret);
                 if(ret != 0)
-                    linked_list_insert_last( array_list_get(e->dst_id, graph_p->vertices), queue); 	//inserts in the queue
+                    linked_list_insert_last( array_list_get(e->dst_id, graph_p->vertices), queue);  //inserts in the queue
                 
                 e= (edge_t*)linked_list_iterator_next(iter_edge);
             }
@@ -402,7 +402,7 @@ linked_list_t* graph_get_vertex_neighborhood_v(vertex_t* vertex_p, enum EdgeDire
                 
                 kh_put(ii,visited,dst,&ret);
                 if(ret != 0){
-                    linked_list_insert_last( array_list_get(dst, graph_p->vertices), queue); 	//inserts in the queue
+                    linked_list_insert_last( array_list_get(dst, graph_p->vertices), queue);    //inserts in the queue
                 }
                 //printf("Inserted %d, ret=%d\n", dst, ret);
 
@@ -444,10 +444,10 @@ inline linked_list_t* graph_get_vertex_adjacents_i(int id, graph_t* graph_p)
 /*!
  * @abstract
  * 
- * @return	>= 0 : vertex index
- * 			-1   : Error at array_list_insert
- * 			-2   : Error at kh_put. It already exists on the hash_table
- * 			-3   : Error name == NULL
+ * @return  >= 0 : vertex index
+ *          -1   : Error at array_list_insert
+ *          -2   : Error at kh_put. It already exists on the hash_table
+ *          -3   : Error name == NULL
  */
 int graph_add_vertex(char* name_p, void* vertex_data, graph_t* graph_p){
     
@@ -506,8 +506,8 @@ int graph_add_vertex(char* name_p, void* vertex_data, graph_t* graph_p){
 
 
 /**
- * @return	0	OK
- * 			-1	Not existing vertex
+ * @return  0   OK
+ *          -1  Not existing vertex
  */
 inline int graph_remove_vertex_s(char* vertex_name, void (*vertex_data_callback) (void* vertex_data),void (*edge_data_callback) (void* edge_data), graph_t* graph_p)
 {
@@ -552,7 +552,7 @@ int graph_remove_vertex_i(int vertex_id, void (*vertex_data_callback) (void* ver
     linked_list_iterator_free(iter);
     
     linked_list_free(v->src, NULL);
-    linked_list_free(v->dst, NULL);	// free dst edge
+    linked_list_free(v->dst, NULL); // free dst edge
     linked_list_free(v->nd, NULL);
     v->src = v->dst = v->nd = NULL;
     
@@ -639,12 +639,12 @@ inline int graph_add_edge_sw(char* src, char* dst, void* edge_data, enum EdgeTyp
  * 
  * 
  * @return 0    : OK
- * 			-1   : src or dst are not in graph
- * 			-2   : edge_type non supported
- * 			-3   : edge_type non compatible with the graph directed type
- * 			-4   : edge breaks acyclity
- * 			-5   : edge breaks multiplicity
- * 			-6   : Weight must be positive
+ *          -1   : src or dst are not in graph
+ *          -2   : edge_type non supported
+ *          -3   : edge_type non compatible with the graph directed type
+ *          -4   : edge breaks acyclity
+ *          -5   : edge breaks multiplicity
+ *          -6   : Weight must be positive
  */
 int graph_add_edge_iw(int src, int dst, void* edge_data, enum EdgeType edge_type, float weight, graph_t* graph_p){
     
@@ -666,11 +666,11 @@ int graph_add_edge_iw(int src, int dst, void* edge_data, enum EdgeType edge_type
             return -4;
     }
 
-    if(graph_p->non_negative && weight < 0)	//FIXME weight < 0 || weight <= 0 ??
+    if(graph_p->non_negative && weight < 0) //FIXME weight < 0 || weight <= 0 ??
         return -6;
 
     //if(graph_exists_vertex_i(src, graph_p) < 0 || graph_exists_vertex_i(dst, graph_p) < 0 )
-    //	return -6;
+    //  return -6;
     return __graph_add_edge(src,dst,edge_data,edge_type,weight,graph_p);
     
 }
@@ -783,9 +783,9 @@ edge_t* graph_get_edge_v(vertex_t* v_src, vertex_t* v_dst, enum EdgeType edge_ty
 
 
 /**
- * @return	0	OK
- * 			-1	Edge doesn't exist
- * 			-2	Corrupted edge
+ * @return  0   OK
+ *          -1  Edge doesn't exist
+ *          -2  Corrupted edge
  */
 inline int graph_remove_edge_s(char* src, char* dst, enum EdgeType edge_type, void (*edge_data_callback) (void* edge_data), graph_t* graph_p)
 {
@@ -983,17 +983,17 @@ inline int graph_get_size (graph_t* graph_p)
 
 /***********************    Profiling    ****************************/
 
-inline int graph_get_vertex_grade_s(char* vertex_name, enum EdgeDirection edge_type, graph_t* graph_p)
+inline int graph_get_vertex_grade_s(char* vertex_name, enum EdgeDirection edge_dir, graph_t* graph_p)
 {
-    return graph_get_vertex_grade_v (graph_get_vertex_s (vertex_name, graph_p), edge_type, graph_p);
+    return graph_get_vertex_grade_v (graph_get_vertex_s (vertex_name, graph_p), edge_dir, graph_p);
 }
 
-inline int graph_get_vertex_grade_i(int vertex_id, enum EdgeDirection edge_type, graph_t* graph_p)
+inline int graph_get_vertex_grade_i(int vertex_id, enum EdgeDirection edge_dir, graph_t* graph_p)
 {
-    return graph_get_vertex_grade_v (graph_get_vertex_i (vertex_id, graph_p), edge_type, graph_p);
+    return graph_get_vertex_grade_v (graph_get_vertex_i (vertex_id, graph_p), edge_dir, graph_p);
 }
 
-int graph_get_vertex_grade_v(vertex_t * v, enum EdgeDirection edge_type, graph_t* graph_p)
+int graph_get_vertex_grade_v(vertex_t * v, enum EdgeDirection edge_dir, graph_t* graph_p)
 {
     assert(graph_p);
     if (v == NULL)
@@ -1003,10 +1003,10 @@ int graph_get_vertex_grade_v(vertex_t * v, enum EdgeDirection edge_type, graph_t
 
     n_edges = linked_list_size(v->nd);
 
-    if (edge_type & GRAPH_EDGE_IN)
+    if (edge_dir & GRAPH_EDGE_IN)
         n_edges += linked_list_size(v->src);
     
-    if (edge_type & GRAPH_EDGE_OUT)
+    if (edge_dir & GRAPH_EDGE_OUT)
         n_edges += linked_list_size(v->dst);
     
     return n_edges;
@@ -1027,42 +1027,104 @@ float graph_get_vertex_clustering_coefficient_v (vertex_t* v, enum EdgeType edge
     assert(graph_p);
     if (v == NULL)
         return -1;
-    
-    linked_list_t * l = graph_get_vertex_neighborhood_v (v, edge_type, 1, graph_p);
+
+    int dir_mode = (edge_type & GRAPH_EDGE_DIRECTED) && (graph_p->directed & GRAPH_DIRECTED);
+    int non_dir_mode = (edge_type & GRAPH_EDGE_NON_DIRECTED) && (graph_p->directed & GRAPH_NON_DIRECTED);
+
+    linked_list_t * l = linked_list_new (graph_p->sync_mode);   // list of adjacent nodes
+
+    linked_list_iterator_t * iter = linked_list_iterator_new(v->dst);
+    edge_t *e;
+    vertex_t *v_aux;
+    int e_id;
+
+    if (dir_mode && non_dir_mode)
+    {
+        linked_list_iterator_init (v->dst, iter);
+        e = linked_list_iterator_curr (iter);
+        while (e != NULL)
+        {
+            linked_list_insert (graph_get_vertex_i (e->dst_id, graph_p), l);
+            e = linked_list_iterator_next(iter);
+        }
+
+        linked_list_iterator_init (v->nd, iter);
+        e = linked_list_iterator_curr (iter);
+        while (e != NULL)
+        {
+            e_id = (e->dst_id == v->id)? e->src_id: e->dst_id;
+            v_aux = graph_get_vertex_i (e_id, graph_p);
+            if (linked_list_contains (v_aux, l) == 0)   // insert unless it is already in the list
+                linked_list_insert (v_aux, l);
+
+            e = linked_list_iterator_next(iter);
+        }
+    }
+    else if (dir_mode)
+    {
+        linked_list_iterator_init (v->dst, iter);
+        e = linked_list_iterator_curr (iter);
+        while (e != NULL)
+        {
+            linked_list_insert (graph_get_vertex_i (e->dst_id, graph_p), l);
+            e = linked_list_iterator_next(iter);
+        }
+    }
+    else if (non_dir_mode)
+    {
+        linked_list_iterator_init (v->nd, iter);
+        e = linked_list_iterator_curr (iter);
+        while (e != NULL)
+        {
+            e_id = (e->dst_id == v->id)? e->src_id: e->dst_id;
+            linked_list_insert (graph_get_vertex_i (e_id, graph_p), l);
+            e = linked_list_iterator_next(iter);
+        }
+    }
+
     int num_adjacent = linked_list_size (l);
-    int max_edges = (num_adjacent * (num_adjacent-1)/* / 2*/);
+    int max_edges = 0;
     int curr_edges = 0;
+
+    if (num_adjacent <= 1)
+    {
+        linked_list_iterator_free(iter);
+        linked_list_free (l, NULL);
+        return -1;
+    }
+
+    if (dir_mode)
+        max_edges += num_adjacent * (num_adjacent-1);
+    if (non_dir_mode)
+        max_edges += (num_adjacent * (num_adjacent-1))/2;
+
     linked_list_iterator_t* iter1 = linked_list_iterator_new (l);
     linked_list_iterator_t* iter2 = linked_list_iterator_new (l);
     vertex_t* v_neighbor1 = (vertex_t*)linked_list_iterator_curr(iter1);
-    vertex_t* v_neighbor2 = (vertex_t*)linked_list_iterator_curr(iter2);
-    
-    while(v_neighbor1 != NULL)
+    vertex_t* v_neighbor2;
+
+    while(v_neighbor1 != NULL)  // travel upper triangular matrix
     {
+        v_neighbor2 = (vertex_t*)linked_list_iterator_next(iter2);  // skips (v_neighbor1 == v_neighbor2) iteration
         while (v_neighbor2 != NULL)
         {
-            if(graph_p->directed & GRAPH_NON_DIRECTED)
+            if (non_dir_mode)
                 if (graph_get_edge_v (v_neighbor1, v_neighbor2, GRAPH_EDGE_NON_DIRECTED, graph_p) != NULL)
-                {
-                    curr_edges+=2;
-                }
-            if(graph_p->directed & GRAPH_NON_DIRECTED)
+                    curr_edges++;
+
+            if (dir_mode)
             {
                 if (graph_get_edge_v (v_neighbor1, v_neighbor2, GRAPH_EDGE_DIRECTED, graph_p) != NULL)
-                {
                     curr_edges++;
-                }
                 if (graph_get_edge_v (v_neighbor2, v_neighbor1, GRAPH_EDGE_DIRECTED, graph_p) != NULL)
-                {
                     curr_edges++;
-                }
             }
             v_neighbor2 = (vertex_t*) linked_list_iterator_next (iter2);
         }
 
-        v_neighbor1 = (vertex_t*) linked_list_iterator_next (iter1);
-        v_neighbor2 = (vertex_t*) linked_list_iterator_first (iter2);
+        v_neighbor2 = v_neighbor1 = (vertex_t*) linked_list_iterator_next (iter1);
     }
+    linked_list_iterator_free(iter);
     linked_list_iterator_free(iter1);
     linked_list_iterator_free(iter2);
     linked_list_free (l, NULL);
@@ -1074,14 +1136,127 @@ float graph_get_clustering_coefficient (enum EdgeType edge_type, graph_t* graph_
 {
     assert(graph_p);
     float cc = 0;
+    float partial_cc;
     int num_adjacent, i;
-
     for (i = 0; i < graph_p->num_vertices; i++)
-        cc += graph_get_vertex_clustering_coefficient_i(i, edge_type, graph_p);
-    
-    cc /= graph_p->num_vertices;
+    {
+        partial_cc = graph_get_vertex_clustering_coefficient_i(i, edge_type, graph_p);
+        if (partial_cc >= 0)
+            cc += partial_cc;
+    }
+
+    cc /= graph_get_order(graph_p);
 
     return cc;
+}
+
+int graph_get_bipartiteness (int **color_array, enum EdgeType edge_type, graph_t* graph_p)
+{
+    int *color = (int*) calloc (graph_p->num_vertices, sizeof(int));
+    if (color_array != NULL)
+        *color_array = color;
+    linked_list_t *pending = linked_list_new(COLLECTION_MODE_ASYNCHRONIZED);    // colored items that have to color its neighbors
+    vertex_t *v;
+    edge_t *e;
+    linked_list_iterator_t * iter = (linked_list_iterator_t *)malloc(sizeof(linked_list_iterator_t));
+    int dir_mode = (edge_type & GRAPH_EDGE_DIRECTED) && (graph_p->directed & GRAPH_DIRECTED);
+    int non_dir_mode = (edge_type & GRAPH_EDGE_NON_DIRECTED) && (graph_p->directed & GRAPH_NON_DIRECTED);
+    int i;
+    int color1 = 1, color2 = 2;
+    int e_id;
+
+    for (i = 0; i < graph_p->num_vertices; i++)
+    {
+        if (color[i] == 0)  // it is not colored yet, and neither are its neighbors, we are entering 
+        {                   // a disconnected subgraph
+            v = graph_get_vertex_i (i, graph_p);
+            if (v != NULL)
+            {
+                linked_list_insert (v, pending);
+                color[i] = color1;
+
+                while (linked_list_size(pending) > 0)   // vertex in the pending list must be colored
+                {
+                    v = linked_list_remove_first (pending);
+
+                    if (dir_mode)
+                    {
+                        iter = linked_list_iterator_init(v->dst, iter);
+                        e = linked_list_iterator_curr (iter);
+                        while (e != NULL)
+                        {
+                            if (color[e->dst_id])   // it is colored, it has passed through the pending list
+                            {
+                                if (color[e->dst_id] == color[v->id])   // odd cycle
+                                {
+                                    linked_list_free (pending, NULL);
+                                    linked_list_iterator_free(iter);
+                                    return 0;
+                                }
+                            }
+                            else    // reached for the first time, uncolored
+                            {
+                                color[e->dst_id] = color[v->id] == color1? color2: color1;  
+                                linked_list_insert (graph_get_vertex_i (e->dst_id, graph_p), pending);
+                            }
+                            e = linked_list_iterator_next(iter);
+                        }
+
+                        iter = linked_list_iterator_init(v->src, iter);
+                        e = linked_list_iterator_curr (iter);
+                        while (e != NULL)
+                        {
+                            if (color[e->src_id])
+                            {
+                                if (color[e->src_id] == color[v->id])   // odd cycle
+                                {
+                                    linked_list_free (pending, NULL);
+                                    linked_list_iterator_free(iter);
+                                    return 0;
+                                }
+                            }
+                            else
+                            {
+                                color[e->src_id] = color[v->id] == color1? color2: color1;  
+                                linked_list_insert (graph_get_vertex_i (e->src_id, graph_p), pending);
+                            }
+                            e = linked_list_iterator_next(iter);
+                        }
+
+                    }
+
+                    if (non_dir_mode)
+                    {
+                        iter = linked_list_iterator_init(v->nd, iter);
+                        e = linked_list_iterator_curr (iter);
+                        while (e != NULL)
+                        {
+                            e_id = e->src_id == v->id? e->dst_id: e->src_id;
+                            if (color[e_id])
+                            {
+                                if (color[e_id] == color[v->id])   // odd cycle
+                                {
+                                    linked_list_free (pending, NULL);
+                                    linked_list_iterator_free(iter);
+                                    return 0;
+                                }
+                            }
+                            else
+                            {
+                                color[e_id] = color[v->id] == color1? color2: color1;  
+                                linked_list_insert (graph_get_vertex_i (e_id, graph_p), pending);
+                            }
+                            e = linked_list_iterator_next(iter);
+                        }
+
+                    }
+                }
+            }
+        }
+    }
+    linked_list_free (pending, NULL);
+    linked_list_iterator_free(iter);
+    return 1;   // all graph is colored bipartitedly
 }
 
 
@@ -1682,3 +1857,4 @@ void graph_run_spanning_tree(int vertex_id, int **subgraph, graph_t *graph_p)
         }
     }
 }*/
+

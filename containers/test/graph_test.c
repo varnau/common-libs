@@ -65,17 +65,7 @@ void create_graph()
     geds(F,E,1);
     geds(D,E,1);
     geds(g,h,1);
-    geds(h,g,1); 
-       
-    vertex_t *v;
-    edge_t*e;
-    int i = 0; 
-    ARRAY_LIST_FOR_EACH(v, g->vertices,
-        printf("Vertice n = %s\n", v->name);
-        LINKED_LIST_FOR_EACH(e, v->dst, printf("Elemento %d, %c\n", i, e->dst_id+'A');i++; );
-        LINKED_LIST_FOR_EACH(e, v->nd, printf("Elemento %d, %c\n", i, e->dst_id+'A');i++; );
-        LINKED_LIST_FOR_EACH(e, v->src, printf("Elemento %d, %c\n", i, e->dst_id+'A');i++; );
-    );
+    geds(h,g,1);
 }
 
 void free_graph()
@@ -146,22 +136,78 @@ START_TEST(test_cc_grade)
 {
     int ret;
     float cc;
-    graph_print_dot("check_graph_cc.gv", g);
-    graph_print(g);
 
     ret = graph_get_vertex_grade_s("A", GRAPH_EDGE_OUT, g);
-    fail_if(ret != 3, "grade(A): should be 3, but ret=%d", ret);
+    fail_if(ret != 2, "grade(A): should be 2, but ret=%d", ret);
 
     ret = graph_get_vertex_grade_s("C", GRAPH_EDGE_IN, g);
-    fail_if(ret != 3, "grade_in(A): should be 3, but ret=%d", ret);
+    fail_if(ret != 1, "grade_in(C): should be 1, but ret=%d", ret);
     ret = graph_get_vertex_grade_s("C", GRAPH_EDGE_OUT, g);
-    fail_if(ret != 3, "grade_out(A): should be 3, but ret=%d", ret);
+    fail_if(ret != 2, "grade_out(C): should be 2, but ret=%d", ret);
     ret = graph_get_vertex_grade_s("C", GRAPH_EDGE_ALL, g);
-    fail_if(ret != 4, "grade_all(A): should be 4, but ret=%d", ret);
+    fail_if(ret != 3, "grade_all(C): should be 3, but ret=%d", ret);
 
+    geds(C,A,1);
+    geds(F,B,1);
+    ges(C,B,1);
+    //geds(C,D,1);
+    ges(A,C,1);
 
-    cc = graph_get_vertex_clustering_coefficient_s ("A", GRAPH_EDGE_OUT, g);
-    fail_if(cc != 0.5, "clustering_coefficient(A): should be 0.5, but cc=%f", cc);
+    graph_print_dot("check_graph_cc1.gv", g);
+    //graph_print(g);
+    
+    cc = graph_get_vertex_clustering_coefficient_s ("B", GRAPH_EDGE_DIRECTED, g);
+    fail_if(cc != -1, "clustering_coefficient(B): should be -1, but cc=%f", cc);
+    cc = graph_get_vertex_clustering_coefficient_s ("C", GRAPH_EDGE_DIRECTED, g);
+    fail_if(abs(cc - 1.0/3) > 0.00001, "clustering_coefficient(C): should be 1/3, but cc=%f", cc);
+    cc = graph_get_vertex_clustering_coefficient_s ("A", GRAPH_EDGE_ALL, g);
+    fail_if(abs(cc - 2.0/3) > 0.00001, "clustering_coefficient(A, dir | non_dir): should be 2/3, but cc=%f", cc);
+    cc = graph_get_vertex_clustering_coefficient_s ("A", GRAPH_EDGE_DIRECTED, g);
+    fail_if(cc != 0.5, "clustering_coefficient(A, dir): should be 0.5, but cc=%f", cc);
+    cc = graph_get_vertex_clustering_coefficient_s ("A", GRAPH_EDGE_NON_DIRECTED, g);
+    fail_if(cc != -1, "clustering_coefficient(A, non_dir): should be -1, but cc=%f", cc);
+
+    graph_remove_edge_s ("B","D", GRAPH_EDGE_DIRECTED, NULL, g);
+    graph_remove_vertex_s ("E", NULL, NULL, g);
+    graph_remove_vertex_s ("g", NULL, NULL, g);
+    graph_remove_vertex_s ("h", NULL, NULL, g);
+
+    cc = graph_get_clustering_coefficient (GRAPH_EDGE_ALL, g);
+    fail_if(abs(cc - 7.0/45) > 0.00001, "clustering_coefficient(ALL): should be 0.17777, but cc=%f", cc);
+    cc = graph_get_clustering_coefficient (GRAPH_EDGE_DIRECTED, g);
+    fail_if(abs(cc - 5.0/6) > 0.00001, "clustering_coefficient(DIRECTED): should be 0.16666, but cc=%f", cc);
+    cc = graph_get_clustering_coefficient (GRAPH_EDGE_NON_DIRECTED, g);
+    fail_if(cc != 0, "clustering_coefficient(NON_DIRECTED): should be 0, but cc=%f", cc);
+    graph_print_dot("check_graph_cc2.gv", g);
+}
+END_TEST
+
+START_TEST(test_bipartiteness)
+{
+    int i;
+    int ret;
+    int *distribution;
+    geds(E,A,1);
+    ges(g,A,1);
+    ges(B,C,1);
+    graph_remove_edge_s ("C","B", GRAPH_EDGE_DIRECTED, NULL, g);
+    graph_remove_vertex_s("A", NULL, NULL, g);
+
+    graph_print_dot("check_graph_bp.gv", g);
+    ret = graph_get_bipartiteness (NULL, GRAPH_EDGE_ALL, g);
+    fail_if(ret != 0, "bipartiteness(ALL): should be , but ret=%d", ret);
+    ret = graph_get_bipartiteness (NULL, GRAPH_EDGE_NON_DIRECTED, g);
+    fail_if(ret != 1, "bipartiteness(NON_DIRECTED): should be 1, but ret=%d", ret);
+    ret = graph_get_bipartiteness (&distribution, GRAPH_EDGE_DIRECTED, g);
+    fail_if(ret != 1, "bipartiteness(DIRECTED): should be 1, but ret=%d", ret);
+    printf ("%s:%d i = %d\n", __FILE__, __LINE__, i);    // DEPURACION
+    for (i = 0; i < g->num_vertices; i++)
+    {
+        if (graph_get_vertex_i(i, g) != NULL)
+            printf ("%s:%d i: %d, name = %s\n", __FILE__, __LINE__, i, graph_get_vertex_i(i, g)->name);  // DEPURACION
+        printf ("%s:%d distribution[%d] = %d\n", __FILE__, __LINE__, i, distribution[i]);    // DEPURACION
+    }
+    free(distribution);
 }
 END_TEST
 
@@ -272,6 +318,7 @@ Suite *create_test_suite(void) {
     tcase_add_test(tc_profiling, test_cc_grade);
     tcase_add_test(tc_profiling, test_dijkstra);
     tcase_add_test(tc_profiling, test_disjoint);
+    tcase_add_test(tc_profiling, test_bipartiteness);
     //tcase_add_test(tc_iterators, test_iterators);
 
     // Add test cases to a test suite
