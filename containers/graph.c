@@ -42,7 +42,7 @@ graph_t* graph_new(enum GraphType mask, int initial_num_vertices, int SYNC_MODE)
     g->dict = kh_init(gr);
     
     g->stats.valid = 0;
-    g->chunk = 20000;
+    g->chunk = 50;
     return g;
     
 }
@@ -1513,7 +1513,7 @@ void graph_run_path_stats(graph_t *graph_p)
         if(stats == NULL)
         {
             stats = calloc(1, sizeof(graph_stats_t));
-            printf("TID: %d, i:%d \n", omp_get_thread_num(), i);
+            //printf("TID: %d, i:%d \n", omp_get_thread_num(), i);
             //stats->grade  = calloc(graph_p->num_vertices,sizeof(int));
             stats->betweenness  = calloc(graph_p->num_vertices,sizeof(int));
             //stats->max_jumps  = calloc(graph_p->num_vertices,sizeof(int));
@@ -1521,10 +1521,10 @@ void graph_run_path_stats(graph_t *graph_p)
             linked_list_insert(stats, list);
         }
 
-        if(!(i%10))
-            printf("Dijkstra %d \n",i);
+        //if(!(i%200))
+            //printf("Dijkstra %d \n",i);
         
-        v = graph_get_vertex_i(i, graph_p->vertices);
+        v = graph_get_vertex_i(i, graph_p);
         if(!v)
             continue;
         path = graph_run_dijkstra(v, GRAPH_EDGE_ALL, graph_p);
@@ -1605,7 +1605,7 @@ void graph_run_path_stats(graph_t *graph_p)
     //float p = graph_p->num_vertices*(graph_p->num_vertices/10000.0);
     //for(int i = 0; i < graph_p->num_vertices; i++)
         //betweenness[i] /= p;
-    
+
     graph_p->stats.valid = 1;
     graph_p->stats.grade = grade; 
     graph_p->stats.betweenness = betweenness;

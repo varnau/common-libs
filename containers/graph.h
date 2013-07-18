@@ -148,12 +148,6 @@ enum Plot_Type {PLOT_GRADE, PLOT_BETWEENNESS, PLOT_JUMPS, PLOT_NON_REACHABLE, PL
  * @param SYNC_MODE Wether the graph must use mutex or not.
  */
 graph_t* graph_new(enum GraphType mask, int initial_num_vertices, int SYNC_MODE);
-/**
- * By the moment, 1 is  the unique valid value for m.
- * @param order Number of vertices the graph returned will have.
- * @param m Edges added each step.
- */
-graph_t *graph_create_free_scale (enum GraphType mask, int order, int SYNC_MODE, int m);
 
 /***********************    Destruction    ****************************/
 
@@ -223,6 +217,7 @@ edge_t* graph_get_edge_v(vertex_t* v_src, vertex_t* v_dst, enum EdgeType edge_ty
 void graph_print(graph_t*);	
 void graph_print_dot(char* file_name, graph_t*);
 void graph_print_dot_w(char* file_name, graph_t*);
+//void graph_read_dot(char *file_name, graph_t*);
 int graph_get_order (graph_t*);	// vertex number
 int graph_get_size (graph_t*);	// edge number
 

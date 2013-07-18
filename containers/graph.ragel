@@ -1,0 +1,236 @@
+#include "graph.h"
+#include "graph_ragel.h"
+
+
+%%{
+    
+        
+    machine graph_dot;
+    write data;
+
+    #############################################
+    #             Actions definition            #
+    #############################################
+    
+    
+    action attr_begin  { ts = p; }
+    action attr_end    { 
+        //printf("attr: %s\n", last_identifier);
+        if (!strncmp(last_identifier, "label",sizeof(last_identifier))) 
+            label_type = TYPE_LABEL;
+        else if (!strncmp(last_identifier, "dir",sizeof(last_identifier))) 
+            label_type = TYPE_DIR;
+        else
+            label_type = TYPE_NONE;
+            
+    }
+    action attr_error  { printf("ERROR %s:%d Pos: %ld State: %d\n", __FILE__,__LINE__, p-file, cs); }
+    
+    action value_begin { ts = p; }
+    action value_end   {
+        
+        switch(label_type)
+        {
+            case TYPE_LABEL:
+                weight = atof(last_identifier);
+                printf("weight: %f, \"%s\"\n", weight, last_identifier);
+                break;
+            case TYPE_DIR:
+                //if (!strncmp(last_identifier, "none",sizeof(field_name)))
+                    
+                break;
+            case TYPE_NONE:
+            default:
+                
+                break;
+        }
+    }
+    action value_error { printf("ERROR %s:%d Pos: %ld State: %d\n", __FILE__,__LINE__, p-file, cs); }
+    
+    action node_begin  { ts = p; }
+    action node_end    {
+        //printf("node_end: Nodo apilado: = %s",last_identifier);
+        graph_add_vertex(last_identifier, NULL, g);
+        //last_node = curr_node;
+        curr_node = graph_find_vertex(last_identifier, g);
+        //printf("  curr: = %d   last: = %d\n",curr_node, last_node);
+    }
+    action node_error  { printf("ERROR %s:%d Pos: %ld State: %d\n", __FILE__,__LINE__, p-file, cs); }
+    
+    action edge_type_begin  { ts = p; }
+    action edge_type_end    {
+        if(!strncmp(ts, "--", p-ts))
+            edge_type = GRAPH_EDGE_NON_DIRECTED;
+        else
+            edge_type = GRAPH_EDGE_DIRECTED;
+            
+        v_node[n_node]=curr_node;
+        n_node++;
+        if(n_node >= MAX_NUM_NODE)
+            v_node = realloc(v_node, MAX_NUM_NODE*=2);
+        
+        printf("edge_type_end: Nodo apilado: = %d  [",curr_node);
+        for(int i = 0; i < n_node; i++)
+            printf("%d, ", v_node[i]);
+        printf("]\n");
+        //printf("find -- or ->. curr= %d\n",curr_node);
+        
+    }
+    action edge_type_error  { printf("ERROR %s:%d Pos: %ld State: %d\n", __FILE__,__LINE__, p-file, cs); }
+    
+    action edge_end    {
+        v_node[n_node]=curr_node;
+        n_node++;
+        if(n_node >= MAX_NUM_NODE)
+            v_node = realloc(v_node, MAX_NUM_NODE*=2);
+        printf("edge_end: Nodo apilado: = %d  [",curr_node);
+        for(int i = 0; i < n_node; i++)
+            printf("%d, ", v_node[i]);
+        printf("]\n");
+        printf("{\n");
+        for(int i = 0; i < n_node-1; i++)
+        {
+            graph_add_edge_iw(v_node[i], v_node[i+1], NULL, edge_type,weight, g);
+            printf("   Edge added (%d, %d)\tw:%f\n" , v_node[i], v_node[i+1], weight);
+        }
+        printf("}\n\n");
+        weight = default_weight;
+        n_node = 0;
+        
+    }
+    action edge_error  { printf("ERROR %s:%d Pos: %ld State: %d\n", __FILE__,__LINE__, p-file, cs); }
+
+    action dst_node_begin {  }
+    action dst_node__end  {
+        v_node[n_node]=curr_node;
+        n_node++;
+        if(n_node >= MAX_NUM_NODE)
+            v_node = realloc(v_node, MAX_NUM_NODE*=2);
+        printf("dst_node__end: Nodo apilado: = %d  [",curr_node);
+        for(int i = 0; i < n_node; i++)
+            printf("%d, ", v_node[i]);
+        printf("]\n");
+    }
+    action dst_node_error { printf("ERROR %s:%d Pos: %ld State: %d\n", __FILE__,__LINE__, p-file, cs); }
+    
+    action default_node_end {
+        printf("ALLERT!! weight default changed: %d\n", default_weight);
+        default_weight = weight;
+    }
+    
+    action id_begin  { ts = p; }
+    action id_end    { strncpy(last_identifier, ts, p-ts);last_identifier[p-ts]=0; }
+    action id_error  { printf("ERROR %s:%d Pos: %ld State: %d\n", __FILE__,__LINE__, p-file, cs); }
+    
+
+    #LEXICO, TOKENS
+    id              = ((alpha|"_") (alnum | "_")* ) >id_begin %id_end $err(id_error);
+    id_str              = ((alnum | "_" | "." | "-"| " " )+ ) >id_begin %id_end $err(id_error);
+    num             = ( "-"? ( digit+ | digit+ "." digit* ) ) >id_begin %id_end $err(id_error);
+    string          = '\"' id_str '\"';
+    identifier      = ( id | num | string) [ \t\n]*;
+    #identifier      = ( id ) [ \t\n]*;
+    edgeop          = (("--"|"->") [ \t]*) >edge_type_begin %edge_type_end $err(edge_type_error);
+    compass_pt 	    = 	("n" | "ne" | "e" | "se" | "s" | "sw" | "w" | "nw" | "c" | "_");
+    tkn_strict      = "strict"     [ \t\n]*;
+    tkn_digraph     = "digraph"    [ \t\n]*;
+    tkn_graph       = "graph"      [ \t\n]*;
+    tkn_node        = "node"       [ \t\n]*;
+    tkn_edge        = "edge"       [ \t\n]*;
+    tkn_ob          = "{"          [ \t\n]*;
+    tkn_cb          = "}"          [ \t\n]*;
+    tkn_osb         = "["          [ \t\n]*;
+    tkn_csb         = "]"          [ \t\n]*;
+    tkn_semic       = ";"          [ \t\n]*;
+    tkn_equal       = "="          [ \t\n]*;
+    tkn_subgraph    = "subgraph"   [ \t\n]*;
+    tkn_coma        = ","          [ \t\n]*;
+    
+    a_list  = ( (identifier) >attr_begin %attr_end $err(attr_error) 
+                tkn_equal 
+                (identifier) >value_begin %value_end $err(value_error) 
+                 tkn_coma? )+ ;
+    attr_list 	= 	(tkn_osb a_list? tkn_csb )+ ;
+    attr_stmt 	= 	( tkn_edge attr_list %default_node_end | (tkn_graph | tkn_node ) attr_list ) ;
+
+   # subgraph 	= (tkn_subgraph identifier? )? tkn_ob stmt_list tkn_cb ; 
+    subgraph 	= (tkn_subgraph identifier? )? tkn_ob (any-"}")* tkn_cb ; 
+    
+    port 	    = 	( ':' identifier (':' compass_pt )? 
+                    | ':' compass_pt ) ;
+    node_id 	= 	(identifier - tkn_edge )  %node_end $err(node_error) 
+                    port? ;
+                    
+    #node_stmt 	= 	node_id attr_list? ;
+    #node_stmt 	= 	node_id attr_list? ;
+    
+  #  edgeRHS =   (edgeop (node_id | subgraph) )+ ;
+  #  edge_stmt = (node_id | subgraph) edgeRHS attr_list? ;
+  
+
+    node_stmt = (                   attr_list?) ;
+    edge_stmt = ( (edgeop node_id)+ attr_list?) %edge_end $err(edge_error) ;
+    
+    stmt    =   ( node_id ( node_stmt | edge_stmt ) 
+                | attr_stmt 
+                | identifier tkn_equal identifier 
+              #  | subgraph
+                ) ;
+    stmt_list = (stmt ";"[ \t\n]* )* ;
+    
+    # Machine start
+    graph_dot := tkn_strict? (tkn_graph | tkn_digraph ) 
+                identifier? tkn_ob [ \t\n]* stmt_list tkn_cb ;
+    
+}%%
+
+graph_t* graph_read_dot(char* file_name)
+{    
+    FILE* fd = fopen(file_name, "rb");
+    if(!fd) printf("ERROR in open\n");
+    
+    fseek (fd , 0 , SEEK_END);
+    int size = ftell (fd);
+    rewind (fd);
+    
+    char* file = malloc(size); 
+    
+    int n =-1;
+    n = fread(file, 1, size, fd);
+    
+    //if(!fgets(file, size, fd))
+        //printf("ERROR lectura\n");
+    
+    //printf("size: %d, n=%d. :%s\n",size, n, file);
+    
+    enum {TYPE_LABEL,TYPE_DIR, TYPE_NONE};
+    enum {ID_NUM,ID_STR};
+
+    int label_type;
+    const size_t MAX_SIZE = 256;
+    size_t MAX_NUM_NODE = 256;
+    char last_identifier[MAX_SIZE];
+    int curr_node;
+    int last_node;
+    int edge_type;
+    float weight = 1;
+    float default_weight = 1;
+    int *v_node = malloc(sizeof(int)*MAX_NUM_NODE);
+    int n_node = 0;
+    graph_t *g = graph_new(GRAPH_MIXED_DIRECTED,5,COLLECTION_MODE_ASYNCHRONIZED);
+    
+    int cs;
+    char *p = file;
+    char *pe = p + size;
+    char *eof = pe;
+    char *ts, *te;
+    //int stack[4];
+    //int top, act;
+
+    %%{
+        write init;
+        write exec;
+    }%% 
+    return g;
+}
+
