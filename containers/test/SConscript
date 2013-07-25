@@ -14,3 +14,31 @@ check_linked_list = env.Program('linked_list.test',
 				           '%s/containers/linked_list.o' % commons_path
                                           ]
                                 )
+
+   
+env['LIBS']+= ["rt"];
+Import("debug")
+
+if debug == 1:
+    env['CFLAGS'] += ' -O0 -g'
+else:
+    env['CFLAGS'] += ' -O3'
+
+
+graph_time_test = env.Program('graph_time.test',
+								['graph_time_test.c',
+							   '%s/commons/string_utils.o' % commons_path,
+							   '%s/commons/log.o' % commons_path,
+							   Glob('%s/containers/*.o' % commons_path),
+							   Glob('%s/containers/cprops/*.o' % commons_path)
+							   ]
+			)
+
+check_graph = env.Program('graph.test', 
+							   source = ['graph_test.c', 
+							   '%s/commons/string_utils.o' % commons_path,
+							   '%s/commons/log.o' % commons_path,
+							   Glob('%s/containers/cprops/*.o' % commons_path),
+							   Glob('%s/containers/*.o' % commons_path)
+							   ]
+			)
