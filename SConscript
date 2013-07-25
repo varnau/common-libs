@@ -2,8 +2,9 @@ Import('debug', 'compiler')
 
 # Initialize environment
 env = Environment(CC = compiler,
-                  CFLAGS = '-std=c99 -D_GNU_SOURCE -D_XOPEN_SOURCE=600 ',
-                  CPPPATH = ['#', '/usr/include/libxml2', '.' ],
+                  CFLAGS = '-std=c99 -D_GNU_SOURCE -D_XOPEN_SOURCE=600 -lgsl -lgslcblas ',
+		  LIBS = ['gsl'],
+                  CPPPATH = ['#', '/usr/include/libxml2', '.', '', '/usr/include' ],
                   LIBPATH = ['/usr/lib' ])
 
 env.Decider('MD5-timestamp')

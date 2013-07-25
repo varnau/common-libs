@@ -3,8 +3,13 @@
 #include <string.h>
 #include <check.h>
 
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_randist.h>
+
 #include "../graph.h"
+#include "../graph_barabasi.h"
 graph_t *g;
+graph_t *g2;
 Suite *create_test_suite(void);
 
 //**************************
@@ -240,6 +245,56 @@ END_TEST
 
 
 START_TEST(test_big_graph) {
+
+}
+END_TEST
+
+/*==========>>>  TEST DE BARAVASI-ALBERT =====================*/
+START_TEST(test_barabasi) {
+
+	printf("\n--------------------\nComienza el test.\n");
+
+	//g= graph_generate_ergdos_renyi_V1(m0, p, sync_mode, edgetype);	
+	int sync_mode;
+
+/*--------------------------- test 1 : */
+	g= graph_generate_ergdos_renyi_V1(100, 0.2, sync_mode, GRAPH_EDGE_NON_DIRECTED);
+	fail_if(g->num_vertices != 100, "Generacion erronea. Numero de vertices iniciales en G_E_R no creados!\n");
+	
+	//printf ("numero de edges %d", g->>
+	graph_print_dot("grafo_ER.dot", g); 
+	graph_run_path_stats(g);
+
+/*----------------------------- fin test 1 */
+
+/*--------------------------- test 2 : */
+
+	// graph_generate_barabasi(int m0, float p, int t, float m, int sync_mode, enum EdgeType edgetype)
+	g2= graph_generate_barabasi(10, 0.5, 90, 1.5, sync_mode, GRAPH_EDGE_NON_DIRECTED);
+	fail_if(g2->num_vertices != 100, "Generacion erronea. Numero de vertices iniciales en G_B_A no creados!\n");
+
+	graph_print_dot("grafo.dot", g2);  
+	 graph_run_path_stats(g2);
+
+/*
+    graph_plot("jumps_tiempo.plt",PLOT_JUMPS, g);
+    graph_plot("bt_tiempo.plt",PLOT_BETWEENNESS, g);
+    graph_plot("w_tiempo.plt",PLOT_WEIGHT, g);
+    graph_plot("nr_tiempo.plt",PLOT_NON_REACHABLE, g);
+    graph_plot("grade_tiempo.plt",PLOT_GRADE, g);
+/*
+	g= graph_generate_barabasi(5, 0.7, 15, 2.5, sync_mode, GRAPH_EDGE_NON_DIRECTED);
+	fail_if(g->num_vertices != 20, "Generacion erronea. Numero de vertices iniciales en G_B_A no creados!\n");
+
+	g= graph_generate_barabasi(5, 0.3, 15, 1.5,  sync_mode, GRAPH_EDGE_DIRECTED);
+	fail_if(g->num_vertices != 20, "Generacion erronea. Numero de vertices iniciales en G_B_A no creados!\n");
+
+	g= graph_generate_barabasi(5, 0.7, 15, 2.5, sync_mode, GRAPH_EDGE_DIRECTED);
+	fail_if(g->num_vertices != 20, "Generacion erronea. Numero de vertices iniciales en G_B_A no creados!\n");
+/*----------------------------- fin test 2 */
+
+
+	printf("\n--------------------\nfin del test\n");
 
 }
 END_TEST
